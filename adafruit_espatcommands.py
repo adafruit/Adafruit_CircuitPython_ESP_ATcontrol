@@ -11,6 +11,9 @@ class espatcommands:
     def __init__(self, uart, baudrate, *, reset_pin=None, debug=False):
         self._uart = uart
         self._reset_pin = reset_pin
+        if self._reset_pin:
+            self._reset_pin.direction = Direction.OUTPUT
+            self._reset_pin.value = True
         self._debug = debug
         self._versionstrings = []
 
@@ -25,7 +28,7 @@ class espatcommands:
     def mode(self, mode):
         if not mode in (1, 2, 3):
             raise RuntimeError("Invalid Mode")
-        self.at_response("AT+CWMODE_CUR=%d" % mode, timeout=0.1)
+        self.at_response("AT+CWMODE_CUR=%d" % mode, timeout=3)
 
     def get_version(self):
         reply = self.at_response("AT+GMR", timeout=0.1).strip(b'\r\n')
@@ -53,30 +56,33 @@ class espatcommands:
         if not "WIFI GOT IP" in reply:
             raise RuntimeError("Didn't get IP address")
 
-    def scan_APs(self):
-        time.sleep(0.1)
-        scan = self.at_response("AT+CWLAP").split(b'\r\n')
-        APs = []
-        for a in scan:
-            print(a)
-            m = ure.match("\+CWLAP:\((.*)\)", a)
-            if m:
-                AP = m.group(1).split(b',')
-                for i, val in enumerate(AP):
-                    AP[i] = val.decode('utf-8')
-                    try:
-                        AP[i] = int(AP[i])
-                    except ValueError:
-                        AP[i] = AP[i].strip('\"') # its a string!
-                APs.append(AP)
-        return APs
+    def scan_APs(self, retries=3):
+        for _ in range(retries):
+            try:
+                scan = self.at_response("AT+CWLAP", timeout=3).split(b'\r\n')
+            except RuntimeError:
+                continue
+            APs = []
+            for line in scan:
+                if line.startswith(b'+CWLAP:('):
+                    AP = line[8:-1].split(b',')
+                    for i, val in enumerate(AP):
+                        AP[i] = val.decode('utf-8')
+                        try:
+                            AP[i] = int(AP[i])
+                        except ValueError:
+                            AP[i] = AP[i].strip('\"') # its a string!
+                    APs.append(AP)
+            return APs
 
     def at_response(self, at_cmd, timeout=10):
+        time.sleep(1)
         if self._debug:
             print("--->", at_cmd)
-        self._uart.reset_input_buffer()
+        #self._uart.reset_input_buffer()
         self._uart.write(at_cmd.encode('utf-8'))
         self._uart.write(b'\x0d\x0a')
+        time.sleep(0.1)
         #uart.timeout = timeout
         #print(uart.readline())  # read echo and toss
         t = time.monotonic()
@@ -101,6 +107,7 @@ class espatcommands:
 
     def soft_reset(self):
         try:
+            self._uart.reset_input_buffer()
             reply = self.at_response("AT+RST", timeout=0.1)
             if reply.strip(b'\r\n') == b'AT+RST':
                 return True
