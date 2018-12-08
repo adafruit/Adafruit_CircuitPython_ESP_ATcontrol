@@ -1,0 +1,118 @@
+import os
+import time
+from digitalio import DigitalInOut, Direction, Pull
+
+class espatcommands:
+
+    MODE_STATION = 1
+    MODE_SOFTAP = 2
+    MODE_SOFTAPSTATION = 3
+
+    def __init__(self, uart, baudrate, *, reset_pin=None, debug=False):
+        self._uart = uart
+        self._reset_pin = reset_pin
+        self._debug = debug
+        self._versionstrings = []
+
+    @property
+    def mode(self):
+        reply = self.at_response("AT+CWMODE_CUR?", timeout=0.1).strip(b'\r\n')
+        if not reply.startswith(b'+CWMODE_CUR:'):
+            raise RuntimeError("Bad response")
+        return int(reply[12:])
+
+    @mode.setter
+    def mode(self, mode):
+        if not mode in (1, 2, 3):
+            raise RuntimeError("Invalid Mode")
+        self.at_response("AT+CWMODE_CUR=%d" % mode, timeout=0.1)
+
+    def get_version(self):
+        reply = self.at_response("AT+GMR", timeout=0.1).strip(b'\r\n')
+        for s in reply.split(b'\r\n'):
+            if s:
+                self._versionstrings.append(s.decode('utf-8'))
+        # get the actual version out
+        vers = self._versionstrings[0].split('(')[0]
+        if not vers.startswith('AT version:'):
+            return False
+        self._versionstring = vers[11:]
+        return self._versionstring
+
+    def get_my_ip(self):
+        reply = at_response("AT+CIFSR")
+        m = ure.match("\+CIFSR:STAIP,\"([0-9\.]+)", reply)
+        if m:
+            return m.group(1).decode('utf-8')
+        raise RuntimeError("Couldn't find IP address")
+
+    def join_AP(self, ssid, password):
+        reply = at_response('AT+CWJAP="'+ssid+'","'+password+'"')
+        if not "WIFI CONNECTED" in reply:
+            raise RuntimeError("Couldn't connect to WiFi")
+        if not "WIFI GOT IP" in reply:
+            raise RuntimeError("Didn't get IP address")
+
+    def scan_APs(self):
+        time.sleep(0.1)
+        scan = self.at_response("AT+CWLAP").split(b'\r\n')
+        APs = []
+        for a in scan:
+            print(a)
+            m = ure.match("\+CWLAP:\((.*)\)", a)
+            if m:
+                AP = m.group(1).split(b',')
+                for i, val in enumerate(AP):
+                    AP[i] = val.decode('utf-8')
+                    try:
+                        AP[i] = int(AP[i])
+                    except ValueError:
+                        AP[i] = AP[i].strip('\"') # its a string!
+                APs.append(AP)
+        return APs
+
+    def at_response(self, at_cmd, timeout=10):
+        if self._debug:
+            print("--->", at_cmd)
+        self._uart.reset_input_buffer()
+        self._uart.write(at_cmd.encode('utf-8'))
+        self._uart.write(b'\x0d\x0a')
+        #uart.timeout = timeout
+        #print(uart.readline())  # read echo and toss
+        t = time.monotonic()
+        response = b''
+        while (time.monotonic() - t) < timeout:
+            response += self._uart.read(self._uart.in_waiting)
+            if response[-4:] == b'OK\r\n':
+                break
+        # eat beginning \n and \r
+        if self._debug:
+            print("<---", response)
+        if response[-4:] != b'OK\r\n':
+            raise RuntimeError("Not OK")
+        return response[:-4]
+
+    def echo(self, e):
+        if e:
+            self.at_response("ATE1", timeout=0.1)
+        else:
+            self.at_response("ATE0", timeout=0.1)
+
+
+    def soft_reset(self):
+        try:
+            reply = self.at_response("AT+RST", timeout=0.1)
+            if reply.strip(b'\r\n') == b'AT+RST':
+                return True
+        except:
+            pass # fail, see below
+        return False
+
+    def hard_reset(self):
+        if self._reset_pin:
+            self._reset_pin.direction = Direction.OUTPUT
+            self._reset_pin.value = False
+            time.sleep(0.1)
+            self._reset_pin.value = True
+            time.sleep(1)
+            self._uart.reset_input_buffer()
