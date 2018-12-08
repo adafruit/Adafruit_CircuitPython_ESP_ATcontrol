@@ -2,6 +2,9 @@ import time
 import board
 import busio
 
+MY_SSID = "foo"
+MY_PASSWORD = "bar"
+
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_espatcommands import adafruit_espatcommands
 
@@ -22,5 +25,5 @@ if esp.mode != esp.MODE_STATION:
 print("Mode is now", esp.mode)
 for ap in esp.scan_APs():
     print(ap)
-esp.join_AP("adafruit", "ffffffff")
+esp.join_AP(MY_SSID, MY_PASSWORD)
 print("My IP Address:", esp.local_ip)
