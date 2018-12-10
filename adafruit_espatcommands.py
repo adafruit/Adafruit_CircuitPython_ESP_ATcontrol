@@ -120,7 +120,7 @@ class espatcommands:
 
     @property
     def mode(self):
-        reply = self.at_response("AT+CWMODE?", timeout=2).strip(b'\r\n')
+        reply = self.at_response("AT+CWMODE?", timeout=5).strip(b'\r\n')
         if not reply.startswith(b'+CWMODE:'):
             raise RuntimeError("Bad response")
         return int(reply[8:])
@@ -188,6 +188,7 @@ class espatcommands:
 
     def at_response(self, at_cmd, timeout=5, retries=3):
         for _ in range(retries):
+            self._uart.reset_input_buffer()
             if self._debug:
                 print("--->", at_cmd)
             #self._uart.reset_input_buffer()
