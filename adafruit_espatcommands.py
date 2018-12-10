@@ -44,7 +44,13 @@ class espatcommands:
             self.send(bytes(request, 'utf-8'))
         except RuntimeError:
             raise
-        return self.receive(timeout=5)
+        reply = self.receive(timeout=5).split(b'\r\n')
+        print(reply)
+        headerbreak = reply.index(b'')
+        header = reply[0:headerbreak]
+        data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
+        self.disconnect()
+        return (header, data)
 
     def receive(self, timeout=5):
         incoming_bytes = None
