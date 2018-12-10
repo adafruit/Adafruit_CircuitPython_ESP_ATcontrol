@@ -37,7 +37,7 @@ class espatcommands:
         port = 80
         if ssl:
             port = 443
-        if not self.connect(self.TYPE_TCP, domain, port, 30, retries=3):
+        if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
             raise RuntimeError("Failed to connect to host")
         request = "GET "+path+" HTTP/1.1\r\nHost: "+domain+"\r\n\r\n"
         try:
@@ -105,7 +105,7 @@ class espatcommands:
         except RuntimeError:
             pass  # this is ok, means we didn't have an open po
 
-    def connect(self, type, remote, remote_port, keepalive=60, retries=1):
+    def connect(self, type, remote, remote_port, *, keepalive=60, retries=1):
         # lets just do one connection at a time for now
         self.disconnect()
         self.at_response("AT+CIPMUX=0")
