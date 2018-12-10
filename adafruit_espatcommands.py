@@ -41,7 +41,7 @@ class espatcommands:
         reply = self.at_response("AT+GMR", timeout=0.1).strip(b'\r\n')
         for s in reply.split(b'\r\n'):
             if s:
-                self._versionstrings.append(s.decode('utf-8'))
+                self._versionstrings.append(str(s,'utf-8'))
         # get the actual version out
         vers = self._versionstrings[0].split('(')[0]
         if not vers.startswith('AT version:'):
@@ -54,7 +54,7 @@ class espatcommands:
         reply = self.at_response("AT+CIFSR").strip(b'\r\n')
         for s in reply.split(b'\r\n'):
             if s and s.startswith(b'+CIFSR:STAIP,"'):
-                return s[14:-1].decode('utf-8')
+                return str(s[14:-1],'utf-8')
         raise RuntimeError("Couldn't find IP address")
 
     def join_AP(self, ssid, password):
@@ -75,7 +75,7 @@ class espatcommands:
                 if line.startswith(b'+CWLAP:('):
                     AP = line[8:-1].split(b',')
                     for i, val in enumerate(AP):
-                        AP[i] = val.decode('utf-8')
+                        AP[i] = str(val,'utf-8')
                         try:
                             AP[i] = int(AP[i])
                         except ValueError:
@@ -88,7 +88,7 @@ class espatcommands:
             if self._debug:
                 print("--->", at_cmd)
             #self._uart.reset_input_buffer()
-            self._uart.write(at_cmd.encode('utf-8'))
+            self._uart.write(bytes(at_cmd,'utf-8'))
             self._uart.write(b'\x0d\x0a')
             #uart.timeout = timeout
             #print(uart.readline())  # read echo and toss
