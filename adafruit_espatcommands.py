@@ -17,9 +17,16 @@ class espatcommands:
         self._debug = debug
         self._versionstrings = []
 
+    def sync(self):
+        try:
+            self.at_response("AT", timeout=0.1)
+            return True
+        except:
+            return False
+
     @property
     def mode(self):
-        reply = self.at_response("AT+CWMODE_CUR?", timeout=0.5).strip(b'\r\n')
+        reply = self.at_response("AT+CWMODE_CUR?", timeout=1).strip(b'\r\n')
         if not reply.startswith(b'+CWMODE_CUR:'):
             raise RuntimeError("Bad response")
         return int(reply[12:])
@@ -78,7 +85,6 @@ class espatcommands:
 
     def at_response(self, at_cmd, timeout=5, retries=3):
         for _ in range(retries):
-            time.sleep(1)
             if self._debug:
                 print("--->", at_cmd)
             #self._uart.reset_input_buffer()
@@ -89,13 +95,17 @@ class espatcommands:
             t = time.monotonic()
             response = b''
             while (time.monotonic() - t) < timeout:
-                response += self._uart.read(self._uart.in_waiting)
-                if response[-4:] == b'OK\r\n':
-                    break
+                if self._uart.in_waiting:
+                    response += self._uart.read(self._uart.in_waiting)
+                    if response[-4:] == b'OK\r\n':
+                        break
+                    if response[-7:] == b'ERROR\r\n':
+                        break
             # eat beginning \n and \r
             if self._debug:
                 print("<---", response)
             if response[-4:] != b'OK\r\n':
+                time.sleep(1)
                 continue
             return response[:-4]
         raise RuntimeError("Not OK")
