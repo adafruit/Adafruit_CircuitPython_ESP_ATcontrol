@@ -45,7 +45,8 @@ class espatcommands:
         except RuntimeError:
             raise
         reply = self.receive(timeout=5).split(b'\r\n')
-        print(reply)
+        if self._debug:
+            print(reply)
         headerbreak = reply.index(b'')
         header = reply[0:headerbreak]
         data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
@@ -64,14 +65,19 @@ class espatcommands:
                     # look for the IPD message
                     if (b'+IPD,' in response) and chr(response[-1]) == ':':
                         i = response.index(b'+IPD,')
-                        incoming_bytes = int(response[i+5:-1])
+                        try:
+                            incoming_bytes = int(response[i+5:-1])
+                        except ValueError:
+                            raise RuntimeError("Parsing error during receive")
                         response = b''  # reset the input buffer
                 else:
                     # read as much as we can!
                     response += self._uart.read(self._uart.in_waiting)
                     if len(response) >= incoming_bytes:
                         break
-        return response
+        if len(response) == incoming_bytes:
+            return response
+        raise RuntimeError("Failed to read proper # of bytes")
 
     def send(self, buffer, timeout=0.5):
         cmd = "AT+CIPSEND=%d" % len(buffer)
@@ -143,7 +149,7 @@ class espatcommands:
     def remote_AP(self):
         reply = self.at_response('AT+CWJAP?', timeout=10).strip(b'\r\n')
         if not reply.startswith('+CWJAP:'):
-            return False
+            return [None]*4
         reply = reply[7:].split(b',')
         for i, val in enumerate(reply):
             reply[i] = str(val,'utf-8')
@@ -230,7 +236,7 @@ class espatcommands:
         try:
             self.at_response("AT", timeout=0.1)
             return True
-        except:
+        except RuntimeError:
             return False
 
     def echo(self, e):
@@ -247,7 +253,7 @@ class espatcommands:
                 time.sleep(2)
                 self._uart.reset_input_buffer()
                 return True
-        except:
+        except RuntimeError:
             pass # fail, see below
         return False
 
