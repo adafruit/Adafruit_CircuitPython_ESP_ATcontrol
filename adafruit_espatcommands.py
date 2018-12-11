@@ -81,7 +81,7 @@ class espatcommands:
 
     def send(self, buffer, timeout=0.5):
         cmd = "AT+CIPSEND=%d" % len(buffer)
-        self.at_response(cmd, timeout=0.1, retries=1)
+        self.at_response(cmd, timeout=3, retries=1)
         prompt = self._uart.read(2)
         if not prompt or prompt != b'> ':
             raise RuntimeError("Didn't get data prompt for sending")
@@ -128,7 +128,7 @@ class espatcommands:
     def mode(self):
         reply = self.at_response("AT+CWMODE?", timeout=5).strip(b'\r\n')
         if not reply.startswith(b'+CWMODE:'):
-            raise RuntimeError("Bad response")
+            raise RuntimeError("Bad response to CWMODE?")
         return int(reply[8:])
 
     @mode.setter
@@ -218,7 +218,7 @@ class espatcommands:
                 time.sleep(1)
                 continue
             return response[:-4]
-        raise RuntimeError("Not OK")
+        raise RuntimeError("No OK response to "+at_cmd)
 
     def get_version(self):
         reply = self.at_response("AT+GMR", timeout=0.1).strip(b'\r\n')
