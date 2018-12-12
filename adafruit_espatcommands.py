@@ -47,7 +47,10 @@ class espatcommands:
         reply = self.receive(timeout=5).split(b'\r\n')
         if self._debug:
             print(reply)
-        headerbreak = reply.index(b'')
+        try:
+            headerbreak = reply.index(b'')
+        except ValueError:
+            raise RuntimeError("Reponse wasn't valid HTML")
         header = reply[0:headerbreak]
         data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
         self.disconnect()
@@ -99,6 +102,8 @@ class espatcommands:
             print("<---", response)
         # Get newlines off front and back, then split into lines
         response = response.strip(b'\r\n').split(b'\r\n')
+        if len(response) < 3:
+            raise RuntimeError("Failed to send data:"+response)
         if response[0] != bytes("Recv %d bytes" % len(buffer), 'utf-8'):
             raise RuntimeError("Failed to send data:"+response[0])
         if response[2] != b'SEND OK':
