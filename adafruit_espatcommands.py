@@ -85,9 +85,16 @@ class espatcommands:
     def send(self, buffer, timeout=0.5):
         cmd = "AT+CIPSEND=%d" % len(buffer)
         self.at_response(cmd, timeout=3, retries=1)
-        prompt = self._uart.read(2)
-        if not prompt or prompt != b'> ':
+        prompt = b''
+        t = time.monotonic()
+        while (time.monotonic() - t) < timeout:
+            if self._uart.in_waiting:
+                prompt += self._uart.read(1)
+                if prompt[-1:] == b'>':
+                    break
+        if not prompt or ( prompt[-1:] != b'>'):
             raise RuntimeError("Didn't get data prompt for sending")
+        self._uart.reset_input_buffer()
         self._uart.write(buffer)
         t = time.monotonic()
         response = b''
@@ -226,7 +233,7 @@ class espatcommands:
         raise RuntimeError("No OK response to "+at_cmd)
 
     def get_version(self):
-        reply = self.at_response("AT+GMR", timeout=0.1).strip(b'\r\n')
+        reply = self.at_response("AT+GMR", timeout=1).strip(b'\r\n')
         for s in reply.split(b'\r\n'):
             if s:
                 self._versionstrings.append(str(s,'utf-8'))
@@ -239,7 +246,7 @@ class espatcommands:
 
     def sync(self):
         try:
-            self.at_response("AT", timeout=0.1)
+            self.at_response("AT", timeout=0.5)
             return True
         except RuntimeError:
             return False
@@ -253,7 +260,7 @@ class espatcommands:
     def soft_reset(self):
         try:
             self._uart.reset_input_buffer()
-            reply = self.at_response("AT+RST", timeout=0.5)
+            reply = self.at_response("AT+RST", timeout=1)
             if reply.strip(b'\r\n') == b'AT+RST':
                 time.sleep(2)
                 self._uart.reset_input_buffer()
