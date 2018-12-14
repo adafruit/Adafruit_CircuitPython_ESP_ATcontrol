@@ -10,6 +10,7 @@ import gc
 
 MY_SSID = "adafruit"
 MY_PASS = "password"
+
 #URL = "http://wifitest.adafruit.com/testwifi/index.html"
 URL = "http://api.coindesk.com/v1/bpi/currentprice.json"
 
@@ -25,27 +26,35 @@ print("Get bitcoin price online")
 print("Free memory:", gc.mem_free() / 1024)
 
 esp = adafruit_espatcommands.espatcommands(uart, 115200, reset_pin = resetpin, debug=True)
-print("Connected to AT software version ", esp.get_version())
+print("Connected to AT software version", esp.get_version())
 
 while True:
     try:
         display.print('----')
         # Connect to WiFi if not already
-        if esp.remote_AP != MY_SSID:
+        print("Connected to", esp.remote_AP)
+        if esp.remote_AP[0] != MY_SSID:
             esp.join_AP(MY_SSID, MY_PASS)
             print("My IP Address:", esp.local_ip)
-
         # great, lets get the JSON data
+        print("Retrieving price...", end='')
         header, body = esp.request_url(URL)
+        print("OK")
+    except RuntimeError as e:
+        print("Failed to connect, retrying")
+        print(e)
+        continue
+
+    try:
+        print("Parsing JSON response...", end='')
         json = ujson.loads(body)
         bitcoin = json["bpi"]["USD"]["rate_float"]
         print("USD per bitcoin:", bitcoin)
         display.print(int(bitcoin))
-        time.sleep(5 * 60)  # 5 minutes
-    except RuntimeError:
-        print("Failed to connect, retrying")
+    except ValueError:
+        print("Failed to parse json, retrying")
         continue
-print(body)
 
-gc.collect()
-print("Free memory:", gc.mem_free() / 1024)
+    gc.collect()
+    print("Free memory:", gc.mem_free() / 1024)
+    time.sleep(60)
