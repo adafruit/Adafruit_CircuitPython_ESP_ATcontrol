@@ -103,11 +103,11 @@ class espatcommands:
         while (time.monotonic() - t) < timeout:
             if self._uart.in_waiting:
                 prompt += self._uart.read(1)
-                if prompt[-1:] == b'>':
+                if prompt[-2:] == b'> ':
                     break
-        if not prompt or ( prompt[-1:] != b'>'):
+        if not prompt or ( prompt[-2:] != b'> '):
             raise RuntimeError("Didn't get data prompt for sending")
-        self._uart.reset_input_buffer()
+#        self._uart.reset_input_buffer()
         self._uart.write(buffer)
         t = time.monotonic()
         response = b''
