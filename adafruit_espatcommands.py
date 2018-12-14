@@ -11,7 +11,7 @@ class espatcommands:
     TYPE_UDP = "UDP"
     TYPE_SSL = "SSL"
 
-    def __init__(self, uart, baudrate, *, reset_pin=None, debug=False):
+    def __init__(self, uart, unused_baudrate, *, reset_pin=None, debug=False):
         self._uart = uart
         self._reset_pin = reset_pin
         if self._reset_pin:
@@ -24,6 +24,16 @@ class espatcommands:
             if not self.soft_reset():
                 self.hard_reset()
                 self.soft_reset()
+        self.echo(False)
+
+
+
+    @property
+    def baudrate(self):
+        return self._uart.baudrate
+
+    @baudrate.setter
+    def baudrate(self, baudrate):
         if self._uart.baudrate != baudrate:
             at_cmd = "AT+UART_CUR="+str(baudrate)+",8,1,0,0\r\n"
             if self._debug:
@@ -36,7 +46,7 @@ class espatcommands:
             self._uart.reset_input_buffer()
             if not self.sync():
                 raise RuntimeError("Failed to resync after Baudrate change")
-        self.echo(False)
+
 
 
     def request_url(self, url, ssl=False):
