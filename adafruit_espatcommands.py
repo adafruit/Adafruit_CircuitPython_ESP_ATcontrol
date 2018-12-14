@@ -11,7 +11,7 @@ class espatcommands:
     TYPE_UDP = "UDP"
     TYPE_SSL = "SSL"
 
-    def __init__(self, uart, unused_baudrate, *, reset_pin=None, debug=False):
+    def __init__(self, uart, baudrate, *, reset_pin=None, debug=False):
         self._uart = uart
         self._reset_pin = reset_pin
         if self._reset_pin:
@@ -24,6 +24,7 @@ class espatcommands:
             if not self.soft_reset():
                 self.hard_reset()
                 self.soft_reset()
+        self.baudrate = baudrate
         self.echo(False)
 
 
