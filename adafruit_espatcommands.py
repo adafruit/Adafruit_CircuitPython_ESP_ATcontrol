@@ -24,7 +24,20 @@ class espatcommands:
             if not self.soft_reset():
                 self.hard_reset()
                 self.soft_reset()
+        if self._uart.baudrate != baudrate:
+            at_cmd = "AT+UART_CUR="+str(baudrate)+",8,1,0,0\r\n"
+            if self._debug:
+                print("changing baudrate to: ",baudrate)
+                print("--->",at_cmd)
+            self._uart.write(bytes(at_cmd,'utf-8'))
+            time.sleep(.25)
+            self._uart.baudrate = baudrate
+            time.sleep(.25)
+            self._uart.reset_input_buffer()
+            if not self.sync():
+                raise RuntimeError("Failed to resync after Baudrate change")
         self.echo(False)
+
 
     def request_url(self, url, ssl=False):
         if url.startswith("https://"):
