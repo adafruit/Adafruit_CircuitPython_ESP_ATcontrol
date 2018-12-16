@@ -1,0 +1,94 @@
+Introduction
+============
+
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-espatcontrol/badge/?version=latest
+    :target: https://circuitpython.readthedocs.io/projects/espatcontrol/en/latest/
+    :alt: Documentation Status
+
+.. image:: https://img.shields.io/discord/327254708534116352.svg
+    :target: https://discord.gg/nBQh6qu
+    :alt: Discord
+
+.. image:: https://travis-ci.org/adafruit/Adafruit_CircuitPython_espATcontrol.svg?branch=master
+    :target: https://travis-ci.org/adafruit/Adafruit_CircuitPython_espATcontrol
+    :alt: Build Status
+
+Use the ESP AT command sent to communicate with the Interwebs. Its slow, but works to get data into CircuitPython
+
+Command set: https://www.espressif.com/sites/default/files/documentation/4a-esp8266_at_instruction_set_en.pdf
+
+Examples: https://www.espressif.com/sites/default/files/documentation/4b-esp8266_at_command_examples_en.pdf
+
+
+Dependencies
+=============
+This driver depends on:
+
+* `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
+
+Please ensure all dependencies are available on the CircuitPython filesystem.
+This is easily achieved by downloading
+`the Adafruit library and driver bundle <https://github.com/adafruit/Adafruit_CircuitPython_Bundle>`_.
+
+Usage Example
+=============
+
+See examples folder for full demos
+
+
+Contributing
+============
+
+Contributions are welcome! Please read our `Code of Conduct
+<https://github.com/adafruit/Adafruit_CircuitPython_espATcontrol/blob/master/CODE_OF_CONDUCT.md>`_
+before contributing to help this project stay welcoming.
+
+Building locally
+================
+
+Zip release files
+-----------------
+
+To build this library locally you'll need to install the
+`circuitpython-build-tools <https://github.com/adafruit/circuitpython-build-tools>`_ package.
+
+.. code-block:: shell
+
+    python3 -m venv .env
+    source .env/bin/activate
+    pip install circuitpython-build-tools
+
+Once installed, make sure you are in the virtual environment:
+
+.. code-block:: shell
+
+    source .env/bin/activate
+
+Then run the build:
+
+.. code-block:: shell
+
+    circuitpython-build-bundles --filename_prefix adafruit-circuitpython-espatcontrol --library_location .
+
+Sphinx documentation
+-----------------------
+
+Sphinx is used to build the documentation based on rST files and comments in the code. First,
+install dependencies (feel free to reuse the virtual environment from above):
+
+.. code-block:: shell
+
+    python3 -m venv .env
+    source .env/bin/activate
+    pip install Sphinx sphinx-rtd-theme
+
+Now, once you have the virtual environment activated:
+
+.. code-block:: shell
+
+    cd docs
+    sphinx-build -E -W -b html . _build/html
+
+This will output the documentation to ``docs/_build/html``. Open the index.html in your browser to
+view them. It will also (due to -W) error out on any warning like Travis will. This is a good way to
+locally verify it will pass.
