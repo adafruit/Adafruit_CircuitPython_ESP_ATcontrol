@@ -10,7 +10,7 @@ uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=1)
 resetpin = DigitalInOut(board.D5)
 
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, debug=True)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, debug=False)
 
 if not esp.soft_reset():
     esp.hard_reset()
