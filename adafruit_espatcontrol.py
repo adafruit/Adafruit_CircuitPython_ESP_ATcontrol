@@ -190,7 +190,7 @@ class ESP_ATcontrol:
         response = b''
         while (time.monotonic() - stamp) < timeout:
             if self._uart.in_waiting:
-                response += self._uart.read(1)
+                response += self._uart.read(self._uart.in_waiting)
                 if response[-9:] == b'SEND OK\r\n':
                     break
                 if response[-7:] == b'ERROR\r\n':
@@ -324,7 +324,7 @@ class ESP_ATcontrol:
             response = b''
             while (time.monotonic() - stamp) < timeout:
                 if self._uart.in_waiting:
-                    response += self._uart.read(1)
+                    response += self._uart.read(self._uart.in_waiting)
                     if response[-4:] == b'OK\r\n':
                         break
                     if response[-7:] == b'ERROR\r\n':
