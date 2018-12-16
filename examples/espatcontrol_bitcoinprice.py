@@ -1,5 +1,4 @@
 import time
-import gc
 import board
 import busio
 from digitalio import DigitalInOut
@@ -54,6 +53,4 @@ while True:
         print("Failed to parse json, retrying")
         continue
 
-    gc.collect()
-    print("Free memory:", gc.mem_free() / 1024)
     time.sleep(60)
