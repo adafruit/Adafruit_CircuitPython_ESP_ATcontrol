@@ -24,7 +24,31 @@ class espatcommands:
             if not self.soft_reset():
                 self.hard_reset()
                 self.soft_reset()
+        self.baudrate = baudrate
         self.echo(False)
+
+
+
+    @property
+    def baudrate(self):
+        return self._uart.baudrate
+
+    @baudrate.setter
+    def baudrate(self, baudrate):
+        if self._uart.baudrate != baudrate:
+            at_cmd = "AT+UART_CUR="+str(baudrate)+",8,1,0,0\r\n"
+            if self._debug:
+                print("changing baudrate to: ",baudrate)
+                print("--->",at_cmd)
+            self._uart.write(bytes(at_cmd,'utf-8'))
+            time.sleep(.25)
+            self._uart.baudrate = baudrate
+            time.sleep(.25)
+            self._uart.reset_input_buffer()
+            if not self.sync():
+                raise RuntimeError("Failed to resync after Baudrate change")
+
+
 
     def request_url(self, url, ssl=False):
         if url.startswith("https://"):
@@ -44,7 +68,7 @@ class espatcommands:
             self.send(bytes(request, 'utf-8'))
         except RuntimeError:
             raise
-        reply = self.receive(timeout=5).split(b'\r\n')
+        reply = self.receive(timeout=10).split(b'\r\n')
         if self._debug:
             print(reply)
         try:
@@ -82,14 +106,15 @@ class espatcommands:
             return response
         raise RuntimeError("Failed to read proper # of bytes")
 
-    def send(self, buffer, timeout=0.5):
+    def send(self, buffer, timeout=1):
         cmd = "AT+CIPSEND=%d" % len(buffer)
-        self.at_response(cmd, timeout=3, retries=1)
+        self.at_response(cmd, timeout=5, retries=1)
         prompt = b''
         t = time.monotonic()
         while (time.monotonic() - t) < timeout:
             if self._uart.in_waiting:
                 prompt += self._uart.read(1)
+                print(prompt)
                 if prompt[-1:] == b'>':
                     break
         if not prompt or ( prompt[-1:] != b'>'):
@@ -108,13 +133,13 @@ class espatcommands:
         if self._debug:
             print("<---", response)
         # Get newlines off front and back, then split into lines
-        response = response.strip(b'\r\n').split(b'\r\n')
-        if len(response) < 3:
-            raise RuntimeError("Failed to send data:"+response)
-        if response[0] != bytes("Recv %d bytes" % len(buffer), 'utf-8'):
-            raise RuntimeError("Failed to send data:"+response[0])
-        if response[2] != b'SEND OK':
-            raise RuntimeError("Failed to send data:"+response[2])
+#        response = response.strip(b'\r\n').split(b'\r\n')
+#        if len(response) < 3:
+#            raise RuntimeError("Failed to send data:"+response)
+#        if response[0] != bytes("Recv %d bytes" % len(buffer), 'utf-8'):
+#            raise RuntimeError("Failed to send data:"+response[0])
+#        if response[2] != b'SEND OK':
+#            raise RuntimeError("Failed to send data:"+response[2])
         return True
 
     def disconnect(self):
@@ -246,16 +271,16 @@ class espatcommands:
 
     def sync(self):
         try:
-            self.at_response("AT", timeout=0.5)
+            self.at_response("AT", timeout=1)
             return True
         except RuntimeError:
             return False
 
     def echo(self, e):
         if e:
-            self.at_response("ATE1", timeout=0.5)
+            self.at_response("ATE1", timeout=1)
         else:
-            self.at_response("ATE0", timeout=0.5)
+            self.at_response("ATE0", timeout=1)
 
     def soft_reset(self):
         try:
