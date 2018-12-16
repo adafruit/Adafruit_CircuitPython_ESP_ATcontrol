@@ -1,18 +1,16 @@
-import time
 import board
 import busio
+from digitalio import DigitalInOut
+import adafruit_espatcontrol
 
-MY_SSID = "foo"
-MY_PASSWORD = "bar"
-
-from digitalio import DigitalInOut, Direction, Pull
-from adafruit_espatcommands import espatcommands
+MY_SSID = "my ssid"
+MY_PASSWORD = "the password"
 
 uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=1)
 resetpin = DigitalInOut(board.D5)
 
 print("ESP AT commands")
-esp = espatcommands(uart, 115200, reset_pin = resetpin, debug=True)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, debug=True)
 
 if not esp.soft_reset():
     esp.hard_reset()
