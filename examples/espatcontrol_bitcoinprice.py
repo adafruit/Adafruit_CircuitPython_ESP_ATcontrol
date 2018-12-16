@@ -1,17 +1,16 @@
 import time
+import gc
 import board
 import busio
-from digitalio import DigitalInOut, Direction, Pull
-from adafruit_espatcommands import adafruit_espatcommands
+from digitalio import DigitalInOut
+import adafruit_espatcontrol
 import ujson
 from adafruit_ht16k33 import segments
-import gc
 
 
-MY_SSID = "adafruit"
-MY_PASS = "password"
+MY_SSID = "ssidname"
+MY_PASS = "thepassword"
 
-#URL = "http://wifitest.adafruit.com/testwifi/index.html"
 URL = "http://api.coindesk.com/v1/bpi/currentprice.json"
 
 uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=0.1)
@@ -19,13 +18,13 @@ resetpin = DigitalInOut(board.D5)
 
 # Create the I2C interface.
 i2c = busio.I2C(board.SCL, board.SDA)
+# Attach a 7 segment display and display -'s so we know its not live yet
 display = segments.Seg7x4(i2c)
 display.print('----')
 
 print("Get bitcoin price online")
-print("Free memory:", gc.mem_free() / 1024)
 
-esp = adafruit_espatcommands.espatcommands(uart, 115200, reset_pin = resetpin, debug=True)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, debug=True)
 print("Connected to AT software version", esp.get_version())
 
 while True:
