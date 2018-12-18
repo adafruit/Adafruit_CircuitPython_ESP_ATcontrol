@@ -78,13 +78,15 @@ class ESP_ATcontrol:
         self._versionstrings = []
         self._version = None
         # Connect and sync
+        self.soft_reset()
         if not self.sync():
             if not self.soft_reset():
                 self.hard_reset()
                 self.soft_reset()
         self.baudrate = baudrate
+        self.at_response("AT+CIPMUX=0")
+        self.at_response("AT+CIPSSLSIZE=4096", timeout=3)
         self.echo(False)
-
 
     @property
     def baudrate(self):
@@ -122,9 +124,11 @@ class ESP_ATcontrol:
         domain, path = url.split('/', 1)
         path = '/'+path
         port = 80
+        conntype = self.TYPE_TCP
         if ssl:
+            conntype = self.TYPE_SSL
             port = 443
-        if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
+        if not self.connect(conntype, domain, port, keepalive=90, retries=3):
             raise RuntimeError("Failed to connect to host")
         request = "GET "+path+" HTTP/1.1\r\nHost: "+domain+"\r\n\r\n"
         try:
@@ -220,23 +224,23 @@ class ESP_ATcontrol:
         is integer port on other side. We can't set the local port"""
         # lets just do one connection at a time for now
         self.disconnect()
-        self.at_response("AT+CIPMUX=0")
-        self.disconnect()
         if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
             raise RuntimeError("Connection type must be TCP, UDL or SSL")
         cmd = 'AT+CIPSTART="'+conntype+'","'+remote+'",'+str(remote_port)+','+str(keepalive)
-        reply = self.at_response(cmd, timeout=3, retries=retries).strip(b'\r\n')
-        if reply == b'CONNECT':
-            return True
+        replies = self.at_response(cmd, timeout=10, retries=retries).split(b'\r\n')
+        for reply in replies:
+            if reply == b'CONNECT':
+                return True
         return False
 
     @property
     def mode(self):
         """What mode we're in, can be MODE_STATION, MODE_SOFTAP or MODE_SOFTAPSTATION"""
-        reply = self.at_response("AT+CWMODE?", timeout=5).strip(b'\r\n')
-        if not reply.startswith(b'+CWMODE:'):
-            raise RuntimeError("Bad response to CWMODE?")
-        return int(reply[8:])
+        replies = self.at_response("AT+CWMODE?", timeout=5).split(b'\r\n')
+        for reply in replies:
+            if reply.startswith(b'+CWMODE:'):
+                return int(reply[8:])
+        raise RuntimeError("Bad response to CWMODE?")
 
     @mode.setter
     def mode(self, mode):
@@ -257,17 +261,19 @@ class ESP_ATcontrol:
     @property
     def remote_AP(self): # pylint: disable=invalid-name
         """The name of the access point we're connected to, as a string"""
-        reply = self.at_response('AT+CWJAP?', timeout=10).strip(b'\r\n')
-        if not reply.startswith('+CWJAP:'):
-            return [None]*4
-        reply = reply[7:].split(b',')
-        for i, val in enumerate(reply):
-            reply[i] = str(val, 'utf-8')
-            try:
-                reply[i] = int(reply[i])
-            except ValueError:
-                reply[i] = reply[i].strip('\"') # its a string!
-        return reply
+        replies = self.at_response('AT+CWJAP?', timeout=10).split(b'\r\n')
+        for reply in replies:
+            if not reply.startswith('+CWJAP:'):
+                continue
+            reply = reply[7:].split(b',')
+            for i, val in enumerate(reply):
+                reply[i] = str(val, 'utf-8')
+                try:
+                    reply[i] = int(reply[i])
+                except ValueError:
+                    reply[i] = reply[i].strip('\"') # its a string!
+            return reply
+        return [None]*4
 
     def join_AP(self, ssid, password): # pylint: disable=invalid-name
         """Try to join an access point by name and password, will return
@@ -341,15 +347,15 @@ class ESP_ATcontrol:
     def get_version(self):
         """Request the AT firmware version string and parse out the
         version number"""
-        reply = self.at_response("AT+GMR", timeout=1).strip(b'\r\n')
+        reply = self.at_response("AT+GMR", timeout=3).strip(b'\r\n')
+        self._version = None
         for line in reply.split(b'\r\n'):
             if line:
                 self._versionstrings.append(str(line, 'utf-8'))
-        # get the actual version out
-        vers = self._versionstrings[0].split('(')[0]
-        if not vers.startswith('AT version:'):
-            return False
-        self._version = vers[11:]
+                # get the actual version out
+                print(line)
+                if b'AT version:' in line:
+                    self._version = str(line, 'utf-8')
         return self._version
 
     def sync(self):
