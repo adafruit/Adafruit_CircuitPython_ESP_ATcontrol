@@ -1,16 +1,16 @@
 Introduction
 ============
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-espatcontrol/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/espatcontrol/en/latest/
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-esp-atcontrol/badge/?version=latest
+    :target: https://circuitpython.readthedocs.io/projects/esp-atcontrol/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.org/adafruit/Adafruit_CircuitPython_espATcontrol.svg?branch=master
-    :target: https://travis-ci.org/adafruit/Adafruit_CircuitPython_espATcontrol
+.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol.svg?branch=master
+    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol
     :alt: Build Status
 
 Use the ESP AT command sent to communicate with the Interwebs. Its slow, but works to get data into CircuitPython
