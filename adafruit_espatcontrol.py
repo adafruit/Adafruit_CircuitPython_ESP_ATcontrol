@@ -143,6 +143,42 @@ class ESP_ATcontrol:
         self.disconnect()
         return (header, data)
 
+
+    def post_url(self, url, ssl=False):
+        """Send an HTTP request to the URL. If the URL starts with https://
+        we will force SSL and use port 443. Otherwise, you can select whether
+        you want ssl by passing in a flag."""
+        if url.startswith("https://"):
+            ssl = True
+            url = url[8:]
+        if url.startswith("http://"):
+            url = url[7:]
+        domain, path = url.split('/', 1)
+        path = '/'+path
+        port = 80
+        if ssl:
+            port = 443
+        if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
+            raise RuntimeError("Failed to connect to host")
+        request = "POST "+path+" HTTP/1.1\r\nHost: "+domain+"\r\n\r\n"
+        try:
+            self.send(bytes(request, 'utf-8'))
+        except RuntimeError:
+            raise
+        reply = self.receive(timeout=10).split(b'\r\n')
+        if self._debug:
+            print(reply)
+        try:
+            headerbreak = reply.index(b'')
+        except ValueError:
+            raise RuntimeError("Reponse wasn't valid HTML")
+        header = reply[0:headerbreak]
+        data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
+        self.disconnect()
+        return (header, data)
+
+
+
     def receive(self, timeout=5):
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
@@ -324,18 +360,18 @@ class ESP_ATcontrol:
             response = b''
             while (time.monotonic() - stamp) < timeout:
                 if self._uart.in_waiting:
-                    response += self._uart.read(self._uart.in_waiting)
-                    if response[-4:] == b'OK\r\n':
+                    response += self._uart.read(self._uart.in_waiting).strip(b'\r\n')
+                    if response[-2:] == b'OK':
                         break
-                    if response[-7:] == b'ERROR\r\n':
+                    if response[-5:] == b'ERROR':
                         break
             # eat beginning \n and \r
             if self._debug:
                 print("<---", response)
-            if response[-4:] != b'OK\r\n':
+            if response[-2:] != b'OK':
                 time.sleep(1)
                 continue
-            return response[:-4]
+            return response[:-2]
         raise RuntimeError("No OK response to "+at_cmd)
 
     def get_version(self):
