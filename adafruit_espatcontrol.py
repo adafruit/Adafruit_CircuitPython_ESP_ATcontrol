@@ -124,8 +124,11 @@ class ESP_ATcontrol:
         port = 80
         if ssl:
             port = 443
-        if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
-            raise RuntimeError("Failed to connect to host")
+            if not self.connect(self.TYPE_SSL, domain, port, keepalive=10, retries=3):
+                raise RuntimeError("Failed to connect to host")
+        else:
+            if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
+                raise RuntimeError("Failed to connect to host")
         request = "GET "+path+" HTTP/1.1\r\nHost: "+domain+"\r\n\r\n"
         try:
             self.send(bytes(request, 'utf-8'))
@@ -158,8 +161,11 @@ class ESP_ATcontrol:
         port = 80
         if ssl:
             port = 443
-        if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
-            raise RuntimeError("Failed to connect to host")
+            if not self.connect(self.TYPE_SSL, domain, port, keepalive=10, retries=3):
+                raise RuntimeError("Failed to connect to host")
+        else:
+            if not self.connect(self.TYPE_TCP, domain, port, keepalive=10, retries=3):
+                raise RuntimeError("Failed to connect to host")
         request = "POST "+path+" HTTP/1.1\r\nHost: "+domain+"\r\n\r\n"
         try:
             self.send(bytes(request, 'utf-8'))
