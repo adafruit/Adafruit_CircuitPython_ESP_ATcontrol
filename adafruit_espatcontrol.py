@@ -59,6 +59,18 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_espATcontrol.git"
 class OKError(Exception):
     pass
 
+class ESP_ATcontrol_socket:
+    def __init__(self, esp):
+        self._esp = esp
+
+    def getaddrinfo(self, host, port,
+                    family=0, socktype=0, proto=0, flags=0):
+        # honestly, we ignore anything but host & port
+        if not isinstance(port, int):
+            raise RuntimeError("port must be an integer")
+        ip = self._esp.nslookup(host)
+        return [(family, socktype, proto, '', (ip, port))]
+
 class ESP_ATcontrol:
     """A wrapper for AT commands to a connected ESP8266 or ESP32 module to do
     some very basic internetting. The ESP module must be pre-programmed with
@@ -94,6 +106,7 @@ class ESP_ATcontrol:
         self._versionstrings = []
         self._version = None
         self._IPDpacket = bytearray(1500)
+        self._ifconfig = []
 
     def begin(self):
         # Connect and sync
@@ -103,6 +116,8 @@ class ESP_ATcontrol:
                     self.hard_reset()
                     self.soft_reset()
                 self.echo(False)
+                # set flow control if required
+                self.baudrate = self._uart.baudrate
                 # get and cache versionstring
                 self.get_version()
                 print(self.version)
@@ -113,8 +128,6 @@ class ESP_ATcontrol:
                 except OKError:
                     # ESP32 doesnt use CIPSSLSIZE, its ok!
                     self.at_response("AT+CIPSSLCCONF?")
-                # set flow control if required
-                self.baudrate = self._uart.baudrate
                 return
             except OKError:
                 pass #retry
@@ -187,6 +200,9 @@ class ESP_ATcontrol:
             if reply.startswith(b'+CIPMUX:'):
                 return int(reply[8:])
         raise RuntimeError("Bad response to CIPMUX?")
+
+    def socket(self):
+        return ESP_ATcontrol_socket(self)
 
     def socket_connect(self, conntype, remote, remote_port, *, keepalive=60, retries=1):
         """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
@@ -363,6 +379,12 @@ class ESP_ATcontrol:
                 return str(line[14:-1], 'utf-8')
         raise RuntimeError("Couldn't find IP address")
 
+    def nslookup(self, host):
+        reply = self.at_response('AT+CIPDOMAIN="%s"' % host.strip('"'), timeout=3)
+        for line in reply.split(b'\r\n'):
+            if line and line.startswith(b'+CIPDOMAIN:'):
+                return str(line[11:], 'utf-8')
+        raise RuntimeError("Couldn't find IP address")
     """*************************** AP SETUP ****************************"""
 
     @property
