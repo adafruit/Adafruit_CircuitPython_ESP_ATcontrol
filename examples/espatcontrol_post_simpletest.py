@@ -20,7 +20,7 @@ print("Get a URL:", URL)
 
 esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, debug=True)
 print("Connected to AT software version", esp.get_version())
-counter = 0 
+counter = 0
 while True:
     try:
         # Connect to WiFi if not already
