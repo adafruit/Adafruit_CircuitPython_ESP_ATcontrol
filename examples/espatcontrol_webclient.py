@@ -20,8 +20,9 @@ print("Connected to AT software version", esp.get_version())
 while True:
     try:
         # Connect to WiFi if not already
-        print("Connected to", esp.remote_AP)
-        if esp.remote_AP[0] != MY_SSID:
+        AP = esp.remote_AP
+        print("Connected to", AP)
+        if AP[0] != MY_SSID:
             esp.join_AP(MY_SSID, MY_PASS)
             print("My IP Address:", esp.local_ip)
         # great, lets get the data
