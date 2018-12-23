@@ -90,19 +90,24 @@ class ESP_ATcontrol:
         self._versionstrings = []
         self._version = None
         # Connect and sync
-        if not self.sync():
-            if not self.sync() and not self.soft_reset():
-                self.hard_reset()
-                self.soft_reset()
-        self.echo(False)
-        self.at_response("AT+CIPMUX=0")
-        try:
-            self.at_response("AT+CIPSSLSIZE=4096", retries=1, timeout=3)
-        except OKError:
-            # ESP32 doesnt use CIPSSLSIZE, its ok!
-            self.at_response("AT+CIPSSLCCONF?")
-        # set flow control if required
-        self.baudrate = baudrate
+        for _ in range(3):
+            try:
+                if not self.sync():
+                    if not self.sync() and not self.soft_reset():
+                        self.hard_reset()
+                        self.soft_reset()
+                self.echo(False)
+                self.at_response("AT+CIPMUX=0")
+                try:
+                    self.at_response("AT+CIPSSLSIZE=4096", retries=1, timeout=3)
+                except OKError:
+                    # ESP32 doesnt use CIPSSLSIZE, its ok!
+                    self.at_response("AT+CIPSSLCCONF?")
+                # set flow control if required
+                self.baudrate = baudrate
+                return
+            except OKError:
+                pass #retry
 
 
     @property
