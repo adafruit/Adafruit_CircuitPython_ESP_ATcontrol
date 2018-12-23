@@ -51,6 +51,7 @@ Implementation Notes
 
 import time
 from digitalio import Direction
+import gc
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_espATcontrol.git"
@@ -72,7 +73,7 @@ class ESP_ATcontrol:
     STATUS_APCONNECTED = 2
     STATUS_SOCKETOPEN = 3
     STATUS_SOCKETCLOSED = 4
-    STATUS_NOTCONNECTED = 2
+    STATUS_NOTCONNECTED = 5
     USER_AGENT = "esp-idf/1.0 esp32"
 
     def __init__(self, uart, baudrate, *,
@@ -89,15 +90,16 @@ class ESP_ATcontrol:
         self._debug = debug
         self._versionstrings = []
         self._version = None
+        self._IPDpacket = bytearray(1500)
         # Connect and sync
         for _ in range(3):
             try:
-                if not self.sync():
-                    if not self.sync() and not self.soft_reset():
-                        self.hard_reset()
-                        self.soft_reset()
+                if not self.sync() and not self.soft_reset():
+                    self.hard_reset()
+                    self.soft_reset()
                 self.echo(False)
-                self.at_response("AT+CIPMUX=0")
+                if self.cipmux != 0:
+                    self.cipmux = 0
                 try:
                     self.at_response("AT+CIPSSLSIZE=4096", retries=1, timeout=3)
                 except OKError:
@@ -109,6 +111,13 @@ class ESP_ATcontrol:
             except OKError:
                 pass #retry
 
+    @property
+    def cipmux(self):
+        replies = self.at_response("AT+CIPMUX?", timeout=3).split(b'\r\n')
+        for reply in replies:
+            if reply.startswith(b'+CIPMUX:'):
+                return int(reply[8:])
+        raise RuntimeError("Bad response to CIPMUX?")
 
     @property
     def baudrate(self):
@@ -135,8 +144,6 @@ class ESP_ATcontrol:
         self._uart.reset_input_buffer()
         if not self.sync():
             raise RuntimeError("Failed to resync after Baudrate change")
-
-
 
     def request_url(self, url, ssl=False):
         """Send an HTTP request to the URL. If the URL starts with https://
@@ -180,8 +187,10 @@ class ESP_ATcontrol:
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
         bundle = b''
-        response = b''
+        gc.collect()
+        i = 0    # index into our internal packet
         stamp = time.monotonic()
+        ipd_start = b'+IPD,'
         while (time.monotonic() - stamp) < timeout:
             if self._rts_pin:
                 self._rts_pin.value = False # start the floooow
@@ -191,27 +200,34 @@ class ESP_ATcontrol:
                     if self._rts_pin:
                         self._rts_pin.value = True # stop the flow
                     # read one byte at a time
-                    response += self._uart.read(1)
+                    self._IPDpacket[i] = self._uart.read(1)[0]
+                    if chr(self._IPDpacket[0]) != '+':
+                        i = 0  # keep goin' till we start with +
+                        continue
+                    i += 1
                     # look for the IPD message
-                    if (b'+IPD,' in response) and chr(response[-1]) == ':':
-                        i = response.index(b'+IPD,')
+                    if (ipd_start in self._IPDpacket) and chr(self._IPDpacket[i-1]) == ':':
                         try:
-                            incoming_bytes = int(response[i+5:-1])
+                            s = str(self._IPDpacket[5:i-1], 'utf-8')
+                            incoming_bytes = int(s)
                             if self._debug:
                                 print("Receiving: ", incoming_bytes)
                         except ValueError:
                             raise RuntimeError("Parsing error during receive")
-                        response = b''  # reset the input buffer
+                        i = 0  # reset the input buffer now that we know the size
                 else:
                     if self._rts_pin:
                         self._rts_pin.value = True # stop the flow
                     # read as much as we can!
-                    toread = min(incoming_bytes-len(response), self._uart.in_waiting)
-                    response += self._uart.read(toread)
-                    if len(response) == incoming_bytes:
-                        bundle += response
-                        response = b''
-                        incoming_bytes = 0
+                    toread = min(incoming_bytes-i, self._uart.in_waiting)
+                    #print("i ", i, "to read:", toread)
+                    self._IPDpacket[i:i+toread] = self._uart.read(toread)
+                    i += toread
+                    if i == incoming_bytes:
+                        #print(self._IPDpacket[0:i])
+                        gc.collect()
+                        bundle += self._IPDpacket[0:i]
+                        i = incoming_bytes = 0
         else:
             #print("TIMED OUT")
             #print(len(response), response)
