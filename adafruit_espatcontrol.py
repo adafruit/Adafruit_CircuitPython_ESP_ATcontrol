@@ -295,6 +295,27 @@ class ESP_ATcontrol:
                 return True
         return False
 
+    def sntp_config(self, en, timezone=None, server=None):
+        at = "AT+CIPSNTPCFG="
+        if en:
+            at += '1'
+        else:
+            at += '0'
+        if timezone is not None:
+            at += ',%d' % timezone
+        if server is not None:
+            at += ',"%s"' % server
+        self.at_response(at, timeout=3)
+
+    @property
+    def sntp_time(self):
+        replies = self.at_response("AT+CIPSNTPTIME?", timeout=5).split(b'\r\n')
+        for reply in replies:
+            if reply.startswith(b'+CIPSNTPTIME:'):
+                return reply[13:]
+        return None
+
+
     @property
     def status(self):
         replies = self.at_response("AT+CIPSTATUS", timeout=5).split(b'\r\n')
