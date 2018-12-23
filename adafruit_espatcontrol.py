@@ -78,7 +78,10 @@ class ESP_ATcontrol:
 
     def __init__(self, uart, baudrate, *,
                  rts_pin = None, reset_pin=None, debug=False):
+        # this function doesn't try to do any sync'ing, just sets up
+        # the hardware, that way nothing can unexpectedly fail!
         self._uart = uart
+        uart.baudrate = baudrate
         self._reset_pin = reset_pin
         self._rts_pin = rts_pin
         if self._reset_pin:
@@ -91,6 +94,8 @@ class ESP_ATcontrol:
         self._versionstrings = []
         self._version = None
         self._IPDpacket = bytearray(1500)
+
+    def begin(self):
         # Connect and sync
         for _ in range(3):
             try:
@@ -98,6 +103,9 @@ class ESP_ATcontrol:
                     self.hard_reset()
                     self.soft_reset()
                 self.echo(False)
+                # get and cache versionstring
+                self.get_version()
+                print(self.version)
                 if self.cipmux != 0:
                     self.cipmux = 0
                 try:
@@ -106,44 +114,10 @@ class ESP_ATcontrol:
                     # ESP32 doesnt use CIPSSLSIZE, its ok!
                     self.at_response("AT+CIPSSLCCONF?")
                 # set flow control if required
-                self.baudrate = baudrate
+                self.baudrate = self._uart.baudrate
                 return
             except OKError:
                 pass #retry
-
-    @property
-    def cipmux(self):
-        replies = self.at_response("AT+CIPMUX?", timeout=3).split(b'\r\n')
-        for reply in replies:
-            if reply.startswith(b'+CIPMUX:'):
-                return int(reply[8:])
-        raise RuntimeError("Bad response to CIPMUX?")
-
-    @property
-    def baudrate(self):
-        """The baudrate of our UART connection"""
-        return self._uart.baudrate
-
-    @baudrate.setter
-    def baudrate(self, baudrate):
-        """Change the modules baudrate via AT commands and then check
-        that we're still sync'd."""
-        at_cmd = "AT+UART_CUR="+str(baudrate)+",8,1,0,"
-        if self._rts_pin is not None:
-            at_cmd +="2"
-        else:
-            at_cmd +="0"
-        at_cmd += "\r\n"
-        if self._debug:
-            print("Changing baudrate to:", baudrate)
-            print("--->", at_cmd)
-        self._uart.write(bytes(at_cmd, 'utf-8'))
-        time.sleep(.25)
-        self._uart.baudrate = baudrate
-        time.sleep(.25)
-        self._uart.reset_input_buffer()
-        if not self.sync():
-            raise RuntimeError("Failed to resync after Baudrate change")
 
     def request_url(self, url, ssl=False):
         """Send an HTTP request to the URL. If the URL starts with https://
@@ -161,17 +135,18 @@ class ESP_ATcontrol:
         if ssl:
             conntype = self.TYPE_SSL
             port = 443
-        if not self.connect(conntype, domain, port, keepalive=90, retries=3):
+        if not self.socket_connect(conntype, domain, port, keepalive=90, retries=3):
             raise RuntimeError("Failed to connect to host")
         request = "GET "+path+" HTTP/1.1\r\n"
         request += "Host: "+domain+"\r\n"
         request += "User-Agent: "+self.USER_AGENT+"\r\n"
         request += "\r\n"
         try:
-            self.send(bytes(request, 'utf-8'))
+            self.socket_send(bytes(request, 'utf-8'))
         except RuntimeError:
             raise
-        reply = self.receive(timeout=3).split(b'\r\n')
+
+        reply = self.socket_receive(timeout=3).split(b'\r\n')
         if self._debug:
             print(reply)
         try:
@@ -180,61 +155,57 @@ class ESP_ATcontrol:
             raise RuntimeError("Reponse wasn't valid HTML")
         header = reply[0:headerbreak]
         data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
-        self.disconnect()
+        self.socket_disconnect()
         return (header, data)
 
-    def receive(self, timeout=5):
-        """Check for incoming data over the open socket, returns bytes"""
-        incoming_bytes = None
-        bundle = b''
-        gc.collect()
-        i = 0    # index into our internal packet
-        stamp = time.monotonic()
-        ipd_start = b'+IPD,'
-        while (time.monotonic() - stamp) < timeout:
-            if self._rts_pin:
-                self._rts_pin.value = False # start the floooow
-            if self._uart.in_waiting:
-                stamp = time.monotonic()  # reset timestamp when there's data!
-                if not incoming_bytes:
-                    if self._rts_pin:
-                        self._rts_pin.value = True # stop the flow
-                    # read one byte at a time
-                    self._IPDpacket[i] = self._uart.read(1)[0]
-                    if chr(self._IPDpacket[0]) != '+':
-                        i = 0  # keep goin' till we start with +
-                        continue
-                    i += 1
-                    # look for the IPD message
-                    if (ipd_start in self._IPDpacket) and chr(self._IPDpacket[i-1]) == ':':
-                        try:
-                            s = str(self._IPDpacket[5:i-1], 'utf-8')
-                            incoming_bytes = int(s)
-                            if self._debug:
-                                print("Receiving: ", incoming_bytes)
-                        except ValueError:
-                            raise RuntimeError("Parsing error during receive")
-                        i = 0  # reset the input buffer now that we know the size
-                else:
-                    if self._rts_pin:
-                        self._rts_pin.value = True # stop the flow
-                    # read as much as we can!
-                    toread = min(incoming_bytes-i, self._uart.in_waiting)
-                    #print("i ", i, "to read:", toread)
-                    self._IPDpacket[i:i+toread] = self._uart.read(toread)
-                    i += toread
-                    if i == incoming_bytes:
-                        #print(self._IPDpacket[0:i])
-                        gc.collect()
-                        bundle += self._IPDpacket[0:i]
-                        i = incoming_bytes = 0
-        else:
-            #print("TIMED OUT")
-            #print(len(response), response)
-            pass
-        return bundle
+    def connect(self, settings):
+        # Connect to WiFi if not already
+        while True:
+            try:
+                self.begin()
+                AP = self.remote_AP
+                print("Connected to", AP[0])
+                if AP[0] != settings['ssid']:
+                    self.join_AP(settings['ssid'], settings['password'])
+                    if 'timezone' in settings:
+                        tz = settings['timezone']
+                        ntp = None
+                        if 'ntp_server' in settings:
+                            ntp = settings['ntp_server']
+                        self.sntp_config(True, tz, ntp)
+                    print("My IP Address:", self.local_ip)
+                return  # yay!
+            except (RuntimeError, OKError) as e:
+                print("Failed to connect, retrying\n", e)
+                continue
 
-    def send(self, buffer, timeout=1):
+    """*************************** SOCKET SETUP ****************************"""
+    @property
+    def cipmux(self):
+        replies = self.at_response("AT+CIPMUX?", timeout=3).split(b'\r\n')
+        for reply in replies:
+            if reply.startswith(b'+CIPMUX:'):
+                return int(reply[8:])
+        raise RuntimeError("Bad response to CIPMUX?")
+
+    def socket_connect(self, conntype, remote, remote_port, *, keepalive=60, retries=1):
+        """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
+        can be an IP address or DNS (we'll do the lookup for you. Remote port
+        is integer port on other side. We can't set the local port"""
+        # lets just do one connection at a time for now
+        if self.status == self.STATUS_SOCKETOPEN:
+            self.socket_disconnect()
+
+        if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
+            raise RuntimeError("Connection type must be TCP, UDL or SSL")
+        cmd = 'AT+CIPSTART="'+conntype+'","'+remote+'",'+str(remote_port)+','+str(keepalive)
+        replies = self.at_response(cmd, timeout=10, retries=retries).split(b'\r\n')
+        for reply in replies:
+            if reply == b'CONNECT':
+                return True
+        return False
+
+    def socket_send(self, buffer, timeout=1):
         """Send data over the already-opened socket, buffer must be bytes"""
         cmd = "AT+CIPSEND=%d" % len(buffer)
         self.at_response(cmd, timeout=5, retries=1)
@@ -262,38 +233,66 @@ class ESP_ATcontrol:
         if self._debug:
             print("<---", response)
         # Get newlines off front and back, then split into lines
-#        response = response.strip(b'\r\n').split(b'\r\n')
-#        if len(response) < 3:
-#            raise RuntimeError("Failed to send data:"+response)
-#        if response[0] != bytes("Recv %d bytes" % len(buffer), 'utf-8'):
-#            raise RuntimeError("Failed to send data:"+response[0])
-#        if response[2] != b'SEND OK':
-#            raise RuntimeError("Failed to send data:"+response[2])
         return True
 
-    def disconnect(self):
+    def socket_receive(self, timeout=5):
+        """Check for incoming data over the open socket, returns bytes"""
+        incoming_bytes = None
+        bundle = b''
+        gc.collect()
+        i = 0    # index into our internal packet
+        stamp = time.monotonic()
+        ipd_start = b'+IPD,'
+        while (time.monotonic() - stamp) < timeout:
+            if self._rts_pin:
+                self._rts_pin.value = False # start the floooow
+            if self._uart.in_waiting:
+                stamp = time.monotonic()  # reset timestamp when there's data!
+                if not incoming_bytes:
+                    if self._rts_pin:
+                        self._rts_pin.value = True # stop the flow
+                    # read one byte at a time
+                    self._IPDpacket[i] = self._uart.read(1)[0]
+                    if chr(self._IPDpacket[0]) != '+':
+                        i = 0  # keep goin' till we start with +
+                        continue
+                    i += 1
+                    # look for the IPD message
+                    if (ipd_start in self._IPDpacket) and chr(self._IPDpacket[i-1]) == ':':
+                        try:
+                            s = str(self._IPDpacket[5:i-1], 'utf-8')
+                            incoming_bytes = int(s)
+                            if self._debug:
+                                print("Receiving:", incoming_bytes)
+                        except ValueError:
+                            raise RuntimeError("Parsing error during receive", s)
+                        i = 0  # reset the input buffer now that we know the size
+                else:
+                    if self._rts_pin:
+                        self._rts_pin.value = True # stop the flow
+                    # read as much as we can!
+                    toread = min(incoming_bytes-i, self._uart.in_waiting)
+                    #print("i ", i, "to read:", toread)
+                    self._IPDpacket[i:i+toread] = self._uart.read(toread)
+                    i += toread
+                    if i == incoming_bytes:
+                        #print(self._IPDpacket[0:i])
+                        gc.collect()
+                        bundle += self._IPDpacket[0:i]
+                        i = incoming_bytes = 0
+        else:
+            #print("TIMED OUT")
+            pass
+        return bundle
+
+    def socket_disconnect(self):
         """Close any open socket, if there is one"""
         try:
             self.at_response("AT+CIPCLOSE", retries=1)
         except OKError:
             pass  # this is ok, means we didn't have an open socket
 
-    def connect(self, conntype, remote, remote_port, *, keepalive=60, retries=1):
-        """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
-        can be an IP address or DNS (we'll do the lookup for you. Remote port
-        is integer port on other side. We can't set the local port"""
-        # lets just do one connection at a time for now
-        if self.status == self.STATUS_SOCKETOPEN:
-            self.disconnect()
-
-        if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
-            raise RuntimeError("Connection type must be TCP, UDL or SSL")
-        cmd = 'AT+CIPSTART="'+conntype+'","'+remote+'",'+str(remote_port)+','+str(keepalive)
-        replies = self.at_response(cmd, timeout=10, retries=retries).split(b'\r\n')
-        for reply in replies:
-            if reply == b'CONNECT':
-                return True
-        return False
+    """*************************** SNTP SETUP ****************************"""
 
     def sntp_config(self, en, timezone=None, server=None):
         at = "AT+CIPSNTPCFG="
@@ -315,6 +314,21 @@ class ESP_ATcontrol:
                 return reply[13:]
         return None
 
+    """*************************** WIFI SETUP ****************************"""
+
+    @property
+    def is_connected(self):
+        try:
+            self.echo(False)
+            stat = self.status
+            print(stat)
+            if stat in (self.STATUS_APCONNECTED,
+                        self.STATUS_SOCKETOPEN,
+                        self.STATUS_SOCKETCLOSED):
+                return True
+        except (OKError, RuntimeError):
+            pass
+        return False
 
     @property
     def status(self):
@@ -348,6 +362,8 @@ class ESP_ATcontrol:
             if line and line.startswith(b'+CIFSR:STAIP,"'):
                 return str(line[14:-1], 'utf-8')
         raise RuntimeError("Couldn't find IP address")
+
+    """*************************** AP SETUP ****************************"""
 
     @property
     def remote_AP(self): # pylint: disable=invalid-name
@@ -403,37 +419,11 @@ class ESP_ATcontrol:
                     routers.append(router)
             return routers
 
-    def at_response(self, at_cmd, timeout=5, retries=3):
-        """Send an AT command, check that we got an OK response,
-        and then cut out the reply lines to return. We can set
-        a variable timeout (how long we'll wait for response) and
-        how many times to retry before giving up"""
-        for _ in range(retries):
-            self._uart.reset_input_buffer()
-            if self._debug:
-                print("--->", at_cmd)
-            #self._uart.reset_input_buffer()
-            self._uart.write(bytes(at_cmd, 'utf-8'))
-            self._uart.write(b'\x0d\x0a')
-            #uart.timeout = timeout
-            #print(uart.readline())  # read echo and toss
-            stamp = time.monotonic()
-            response = b''
-            while (time.monotonic() - stamp) < timeout:
-                if self._uart.in_waiting:
-                    response += self._uart.read(self._uart.in_waiting).strip(b'\r\n')
-                    if response[-2:] == b'OK':
-                        break
-                    if response[-5:] == b'ERROR':
-                        break
-            # eat beginning \n and \r
-            if self._debug:
-                print("<---", response)
-            if response[-2:] != b'OK':
-                time.sleep(1)
-                continue
-            return response[:-2]
-        raise OKError("No OK response to "+at_cmd)
+    """************************** AT LOW LEVEL ****************************"""
+
+    @property
+    def version(self):
+        return self._version
 
     def get_version(self):
         """Request the AT firmware version string and parse out the
@@ -448,6 +438,35 @@ class ESP_ATcontrol:
                     self._version = str(line, 'utf-8')
         return self._version
 
+    def at_response(self, at_cmd, timeout=5, retries=3):
+        """Send an AT command, check that we got an OK response,
+        and then cut out the reply lines to return. We can set
+        a variable timeout (how long we'll wait for response) and
+        how many times to retry before giving up"""
+        for _ in range(retries):
+            self._uart.reset_input_buffer()
+            if self._debug:
+                print("--->", at_cmd)
+            self._uart.write(bytes(at_cmd, 'utf-8'))
+            self._uart.write(b'\x0d\x0a')
+            stamp = time.monotonic()
+            response = b''
+            while (time.monotonic() - stamp) < timeout:
+                if self._uart.in_waiting:
+                    response += self._uart.read(1)
+                    if response[-4:] == b'OK\r\n':
+                        break
+                    if response[-7:] == b'ERROR\r\n':
+                        break
+            # eat beginning \n and \r
+            if self._debug:
+                print("<---", response)
+            if response[-4:] != b'OK\r\n':
+                time.sleep(1)
+                continue
+            return response[:-4]
+        raise OKError("No OK response to "+at_cmd)
+
     def sync(self):
         """Check if we have AT commmand sync by sending plain ATs"""
         try:
@@ -455,6 +474,32 @@ class ESP_ATcontrol:
             return True
         except OKError:
             return False
+
+    @property
+    def baudrate(self):
+        """The baudrate of our UART connection"""
+        return self._uart.baudrate
+
+    @baudrate.setter
+    def baudrate(self, baudrate):
+        """Change the modules baudrate via AT commands and then check
+        that we're still sync'd."""
+        at_cmd = "AT+UART_CUR="+str(baudrate)+",8,1,0,"
+        if self._rts_pin is not None:
+            at_cmd +="2"
+        else:
+            at_cmd +="0"
+        at_cmd += "\r\n"
+        if self._debug:
+            print("Changing baudrate to:", baudrate)
+            print("--->", at_cmd)
+        self._uart.write(bytes(at_cmd, 'utf-8'))
+        time.sleep(.25)
+        self._uart.baudrate = baudrate
+        time.sleep(.25)
+        self._uart.reset_input_buffer()
+        if not self.sync():
+            raise RuntimeError("Failed to resync after Baudrate change")
 
     def echo(self, echo):
         """Set AT command echo on or off"""
