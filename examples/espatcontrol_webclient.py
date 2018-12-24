@@ -28,7 +28,6 @@ while True:
         while not esp.is_connected:
             print("Connecting...")
             esp.connect(settings)
-            print("Connected to AT software version ", esp.version)
         # great, lets get the data
         print("Retrieving URL...", end='')
         header, body = esp.request_url(URL)
