@@ -1,6 +1,6 @@
+import time
 import board
 import busio
-import time
 from digitalio import DigitalInOut
 import adafruit_espatcontrol
 

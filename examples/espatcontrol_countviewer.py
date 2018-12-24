@@ -7,8 +7,8 @@ import gc
 import time
 import board
 import busio
-import audioio
 from digitalio import DigitalInOut
+import audioio
 from Adafruit_CircuitPython_ESP_ATcontrol import adafruit_espatcontrol
 from adafruit_ht16k33 import segments
 import neopixel
