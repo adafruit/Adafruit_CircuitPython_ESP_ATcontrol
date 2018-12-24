@@ -49,33 +49,37 @@ Implementation Notes
 
 """
 
+import gc
 import time
 from digitalio import Direction
-import gc
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_espATcontrol.git"
 
 class OKError(Exception):
+    """The exception thrown when we didn't get acknowledgement to an AT command"""
     pass
 
 class ESP_ATcontrol_socket:
+    """A 'socket' compatible interface thru the ESP AT command set"""
     def __init__(self, esp):
         self._esp = esp
 
-    def getaddrinfo(self, host, port,
-                    family=0, socktype=0, proto=0, flags=0):
-        # honestly, we ignore anything but host & port
+    def getaddrinfo(self, host, port,  # pylint: disable=too-many-arguments
+                    family=0, socktype=0, proto=0, flags=0): # pylint: disable=unused-argument
+        """Given a hostname and a port name, return a 'socket.getaddrinfo'
+        compatible list of tuples. Honestly, we ignore anything but host & port"""
         if not isinstance(port, int):
             raise RuntimeError("port must be an integer")
-        ip = self._esp.nslookup(host)
-        return [(family, socktype, proto, '', (ip, port))]
+        ipaddr = self._esp.nslookup(host)
+        return [(family, socktype, proto, '', (ipaddr, port))]
 
 class ESP_ATcontrol:
     """A wrapper for AT commands to a connected ESP8266 or ESP32 module to do
     some very basic internetting. The ESP module must be pre-programmed with
     AT command firmware, you can use esptool or our CircuitPython miniesptool
     to upload firmware"""
+    #pylint: disable=too-many-public-methods, too-many-instance-attributes
     MODE_STATION = 1
     MODE_SOFTAP = 2
     MODE_SOFTAPSTATION = 3
@@ -89,9 +93,9 @@ class ESP_ATcontrol:
     USER_AGENT = "esp-idf/1.0 esp32"
 
     def __init__(self, uart, default_baudrate, *, run_baudrate=None,
-                 rts_pin = None, reset_pin=None, debug=False):
-        # this function doesn't try to do any sync'ing, just sets up
-        # the hardware, that way nothing can unexpectedly fail!
+                 rts_pin=None, reset_pin=None, debug=False):
+        """This function doesn't try to do any sync'ing, just sets up
+        # the hardware, that way nothing can unexpectedly fail!"""
         self._uart = uart
         if not run_baudrate:
             run_baudrate = default_baudrate
@@ -111,11 +115,15 @@ class ESP_ATcontrol:
         self._debug = debug
         self._versionstrings = []
         self._version = None
-        self._IPDpacket = bytearray(1500)
+        self._ipdpacket = bytearray(1500)
         self._ifconfig = []
         self._initialized = False
 
     def begin(self):
+        """Initialize the module by syncing, resetting if necessary, setting up
+        the desired baudrate, turning on single-socket mode, and configuring
+        SSL support. Required before using the module but we dont do in __init__
+        because this can throw an exception."""
         # Connect and sync
         for _ in range(3):
             try:
@@ -179,30 +187,36 @@ class ESP_ATcontrol:
         return (header, data)
 
     def connect(self, settings):
+        """Repeatedly try to connect to an access point with the details in
+        the passed in 'settings' dictionary. Be sure 'ssid' and 'password' are
+        defined in the settings dict! If 'timezone' is set, we'll also configure
+        SNTP"""
         # Connect to WiFi if not already
         while True:
             try:
                 if not self._initialized:
                     self.begin()
-                AP = self.remote_AP
+                AP = self.remote_AP           # pylint: disable=invalid-name
                 print("Connected to", AP[0])
                 if AP[0] != settings['ssid']:
                     self.join_AP(settings['ssid'], settings['password'])
                     if 'timezone' in settings:
-                        tz = settings['timezone']
+                        tzone = settings['timezone']
                         ntp = None
                         if 'ntp_server' in settings:
                             ntp = settings['ntp_server']
-                        self.sntp_config(True, tz, ntp)
+                        self.sntp_config(True, tzone, ntp)
                     print("My IP Address:", self.local_ip)
                 return  # yay!
-            except (RuntimeError, OKError) as e:
-                print("Failed to connect, retrying\n", e)
+            except (RuntimeError, OKError) as exp:
+                print("Failed to connect, retrying\n", exp)
                 continue
 
-    """*************************** SOCKET SETUP ****************************"""
+    # *************************** SOCKET SETUP ****************************
+
     @property
     def cipmux(self):
+        """The IP socket multiplexing setting. 0 for one socket, 1 for multi-socket"""
         replies = self.at_response("AT+CIPMUX?", timeout=3).split(b'\r\n')
         for reply in replies:
             if reply.startswith(b'+CIPMUX:'):
@@ -210,6 +224,7 @@ class ESP_ATcontrol:
         raise RuntimeError("Bad response to CIPMUX?")
 
     def socket(self):
+        """Create a 'socket' object"""
         return ESP_ATcontrol_socket(self)
 
     def socket_connect(self, conntype, remote, remote_port, *, keepalive=10, retries=1):
@@ -268,6 +283,7 @@ class ESP_ATcontrol:
         return True
 
     def socket_receive(self, timeout=5):
+        # pylint: disable=too-many-nested-blocks
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
         bundle = b''
@@ -281,38 +297,35 @@ class ESP_ATcontrol:
                 if not incoming_bytes:
                     self.hw_flow(False) # stop the flow
                     # read one byte at a time
-                    self._IPDpacket[i] = self._uart.read(1)[0]
-                    if chr(self._IPDpacket[0]) != '+':
+                    self._ipdpacket[i] = self._uart.read(1)[0]
+                    if chr(self._ipdpacket[0]) != '+':
                         i = 0  # keep goin' till we start with +
                         continue
                     i += 1
                     # look for the IPD message
-                    if (ipd_start in self._IPDpacket) and chr(self._IPDpacket[i-1]) == ':':
+                    if (ipd_start in self._ipdpacket) and chr(self._ipdpacket[i-1]) == ':':
                         try:
-                            s = str(self._IPDpacket[5:i-1], 'utf-8')
-                            incoming_bytes = int(s)
+                            ipd = str(self._ipdpacket[5:i-1], 'utf-8')
+                            incoming_bytes = int(ipd)
                             if self._debug:
                                 print("Receiving:", incoming_bytes)
                         except ValueError:
-                            raise RuntimeError("Parsing error during receive", s)
+                            raise RuntimeError("Parsing error during receive", ipd)
                         i = 0  # reset the input buffer now that we know the size
                 else:
                     self.hw_flow(False) # stop the flow
                     # read as much as we can!
                     toread = min(incoming_bytes-i, self._uart.in_waiting)
                     #print("i ", i, "to read:", toread)
-                    self._IPDpacket[i:i+toread] = self._uart.read(toread)
+                    self._ipdpacket[i:i+toread] = self._uart.read(toread)
                     i += toread
                     if i == incoming_bytes:
-                        #print(self._IPDpacket[0:i])
+                        #print(self._ipdpacket[0:i])
                         gc.collect()
-                        bundle += self._IPDpacket[0:i]
+                        bundle += self._ipdpacket[0:i]
                         i = incoming_bytes = 0
             else: # no data waiting
                 self.hw_flow(True) # start the floooow
-        else:
-            #print("TIMED OUT")
-            pass
         return bundle
 
     def socket_disconnect(self):
@@ -322,32 +335,38 @@ class ESP_ATcontrol:
         except OKError:
             pass  # this is ok, means we didn't have an open socket
 
-    """*************************** SNTP SETUP ****************************"""
+    # *************************** SNTP SETUP ****************************
 
-    def sntp_config(self, en, timezone=None, server=None):
-        at = "AT+CIPSNTPCFG="
-        if en:
-            at += '1'
+    def sntp_config(self, enable, timezone=None, server=None):
+        """Configure the built in ESP SNTP client with a UTC-offset number (timezone)
+        and server as IP or hostname."""
+        cmd = "AT+CIPSNTPCFG="
+        if enable:
+            cmd += '1'
         else:
-            at += '0'
+            cmd += '0'
         if timezone is not None:
-            at += ',%d' % timezone
+            cmd += ',%d' % timezone
         if server is not None:
-            at += ',"%s"' % server
-        self.at_response(at, timeout=3)
+            cmd += ',"%s"' % server
+        self.at_response(cmd, timeout=3)
 
     @property
     def sntp_time(self):
+        """Return a string with time/date information using SNTP, may return
+        1970 'bad data' on the first few minutes, without warning!"""
         replies = self.at_response("AT+CIPSNTPTIME?", timeout=5).split(b'\r\n')
         for reply in replies:
             if reply.startswith(b'+CIPSNTPTIME:'):
                 return reply[13:]
         return None
 
-    """*************************** WIFI SETUP ****************************"""
+    # *************************** WIFI SETUP ****************************
 
     @property
     def is_connected(self):
+        """Initialize module if not done yet, and check if we're connected to
+        an access point, returns True or False"""
         if not self._initialized:
             self.begin()
         try:
@@ -363,6 +382,7 @@ class ESP_ATcontrol:
 
     @property
     def status(self):
+        """The IP connection status number (see AT+CIPSTATUS datasheet for meaning)"""
         replies = self.at_response("AT+CIPSTATUS", timeout=5).split(b'\r\n')
         for reply in replies:
             if reply.startswith(b'STATUS:'):
@@ -391,7 +411,7 @@ class ESP_ATcontrol:
 
     @property
     def local_ip(self):
-        """Our local IP address as a dotted-octal string"""
+        """Our local IP address as a dotted-quad string"""
         reply = self.at_response("AT+CIFSR").strip(b'\r\n')
         for line in reply.split(b'\r\n'):
             if line and line.startswith(b'+CIFSR:STAIP,"'):
@@ -399,6 +419,7 @@ class ESP_ATcontrol:
         raise RuntimeError("Couldn't find IP address")
 
     def ping(self, host):
+        """Ping the IP or hostname given, returns ms time or None on failure"""
         reply = self.at_response('AT+PING="%s"' % host.strip('"'), timeout=5)
         for line in reply.split(b'\r\n'):
             if line and line.startswith(b'+PING:'):
@@ -409,12 +430,14 @@ class ESP_ATcontrol:
         raise RuntimeError("Couldn't ping")
 
     def nslookup(self, host):
+        """Return a dotted-quad IP address strings that matches the hostname"""
         reply = self.at_response('AT+CIPDOMAIN="%s"' % host.strip('"'), timeout=3)
         for line in reply.split(b'\r\n'):
             if line and line.startswith(b'+CIPDOMAIN:'):
                 return str(line[11:], 'utf-8')
         raise RuntimeError("Couldn't find IP address")
-    """*************************** AP SETUP ****************************"""
+
+    # *************************** AP SETUP ****************************
 
     @property
     def remote_AP(self): # pylint: disable=invalid-name
@@ -479,10 +502,11 @@ class ESP_ATcontrol:
                     routers.append(router)
             return routers
 
-    """************************** AT LOW LEVEL ****************************"""
+    # ************************** AT LOW LEVEL ****************************
 
     @property
     def version(self):
+        """The cached version string retrieved via the AT+GMR command"""
         return self._version
 
     def get_version(self):
@@ -500,6 +524,7 @@ class ESP_ATcontrol:
 
 
     def hw_flow(self, flag):
+        """Turn on HW flow control (if available) on to allow data, or off to stop"""
         if self._rts_pin:
             self._rts_pin.value = not flag
 
@@ -508,6 +533,7 @@ class ESP_ATcontrol:
         and then cut out the reply lines to return. We can set
         a variable timeout (how long we'll wait for response) and
         how many times to retry before giving up"""
+        #pylint: disable=too-many-branches
         for _ in range(retries):
             self.hw_flow(True)    # allow any remaning data to stream in
             time.sleep(0.1)       # wait for uart data
@@ -571,9 +597,9 @@ class ESP_ATcontrol:
         that we're still sync'd."""
         at_cmd = "AT+UART_CUR="+str(baudrate)+",8,1,0,"
         if self._rts_pin is not None:
-            at_cmd +="2"
+            at_cmd += "2"
         else:
-            at_cmd +="0"
+            at_cmd += "0"
         at_cmd += "\r\n"
         if self._debug:
             print("Changing baudrate to:", baudrate)
@@ -608,6 +634,7 @@ class ESP_ATcontrol:
         return False
 
     def factory_reset(self):
+        """Perform a hard reset, then send factory restore settings request"""
         self.hard_reset()
         self.at_response("AT+RESTORE", timeout=1)
         self._initialized = False

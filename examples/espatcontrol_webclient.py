@@ -1,6 +1,6 @@
+import time
 import board
 import busio
-import time
 from digitalio import DigitalInOut
 import adafruit_espatcontrol
 
@@ -32,7 +32,7 @@ while True:
         print("Retrieving URL...", end='')
         header, body = esp.request_url(URL)
         print("OK")
-        
+
         print('-'*40)
         print(str(body, 'utf-8'))
         print('-'*40)
