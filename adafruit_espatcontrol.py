@@ -209,9 +209,14 @@ class ESP_ATcontrol:
         can be an IP address or DNS (we'll do the lookup for you. Remote port
         is integer port on other side. We can't set the local port"""
         # lets just do one connection at a time for now
-        if self.status == self.STATUS_SOCKETOPEN:
-            self.socket_disconnect()
-
+        while True:
+            stat = self.status
+            if stat in (self.STATUS_APCONNECTED, self.STATUS_SOCKETCLOSED):
+                break
+            elif stat == self.STATUS_SOCKETOPEN:
+                self.socket_disconnect()
+            else:
+                time.sleep(1)
         if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
             raise RuntimeError("Connection type must be TCP, UDL or SSL")
         cmd = 'AT+CIPSTART="'+conntype+'","'+remote+'",'+str(remote_port)+','+str(keepalive)
@@ -390,6 +395,9 @@ class ESP_ATcontrol:
     @property
     def remote_AP(self): # pylint: disable=invalid-name
         """The name of the access point we're connected to, as a string"""
+        stat = self.status
+        if stat != self.STATUS_APCONNECTED:
+            return [None]*4
         replies = self.at_response('AT+CWJAP?', timeout=10).split(b'\r\n')
         for reply in replies:
             if not reply.startswith('+CWJAP:'):
@@ -480,6 +488,12 @@ class ESP_ATcontrol:
                         break
                     if response[-7:] == b'ERROR\r\n':
                         break
+                    if b'WIFI CONNECTED\r\n' in response:
+                        break
+                    if b'WIFI GOT IP\r\n' in response:
+                        break
+                    if b'ERR CODE:\r\n' in response:
+                        break
             # eat beginning \n and \r
             if self._debug:
                 print("<---", response)
@@ -552,5 +566,5 @@ class ESP_ATcontrol:
             self._reset_pin.value = False
             time.sleep(0.1)
             self._reset_pin.value = True
-            time.sleep(1)
+            time.sleep(3)  # give it a few seconds to wake up
             self._uart.reset_input_buffer()
