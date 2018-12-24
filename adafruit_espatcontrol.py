@@ -113,6 +113,7 @@ class ESP_ATcontrol:
         self._version = None
         self._IPDpacket = bytearray(1500)
         self._ifconfig = []
+        self._initialized = False
 
     def begin(self):
         # Connect and sync
@@ -126,7 +127,6 @@ class ESP_ATcontrol:
                 self.baudrate = self._run_baudrate
                 # get and cache versionstring
                 self.get_version()
-                print(self.version)
                 if self.cipmux != 0:
                     self.cipmux = 0
                 try:
@@ -134,6 +134,7 @@ class ESP_ATcontrol:
                 except OKError:
                     # ESP32 doesnt use CIPSSLSIZE, its ok!
                     self.at_response("AT+CIPSSLCCONF?")
+                self._initialized = True
                 return
             except OKError:
                 pass #retry
@@ -181,7 +182,8 @@ class ESP_ATcontrol:
         # Connect to WiFi if not already
         while True:
             try:
-                self.begin()
+                if not self._initialized:
+                    self.begin()
                 AP = self.remote_AP
                 print("Connected to", AP[0])
                 if AP[0] != settings['ssid']:
@@ -226,7 +228,7 @@ class ESP_ATcontrol:
         if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
             raise RuntimeError("Connection type must be TCP, UDL or SSL")
         cmd = 'AT+CIPSTART="'+conntype+'","'+remote+'",'+str(remote_port)+','+str(keepalive)
-        replies = self.at_response(cmd, timeout=10, retries=retries).split(b'\r\n')
+        replies = self.at_response(cmd, timeout=3, retries=retries).split(b'\r\n')
         for reply in replies:
             if reply == b'CONNECT' and self.status == self.STATUS_SOCKETOPEN:
                 return True
@@ -346,10 +348,11 @@ class ESP_ATcontrol:
 
     @property
     def is_connected(self):
+        if not self._initialized:
+            self.begin()
         try:
             self.echo(False)
             stat = self.status
-            print(stat)
             if stat in (self.STATUS_APCONNECTED,
                         self.STATUS_SOCKETOPEN,
                         self.STATUS_SOCKETCLOSED):
@@ -369,6 +372,8 @@ class ESP_ATcontrol:
     @property
     def mode(self):
         """What mode we're in, can be MODE_STATION, MODE_SOFTAP or MODE_SOFTAPSTATION"""
+        if not self._initialized:
+            self.begin()
         replies = self.at_response("AT+CWMODE?", timeout=5).split(b'\r\n')
         for reply in replies:
             if reply.startswith(b'+CWMODE:'):
@@ -378,6 +383,8 @@ class ESP_ATcontrol:
     @mode.setter
     def mode(self, mode):
         """Station or AP mode selection, can be MODE_STATION, MODE_SOFTAP or MODE_SOFTAPSTATION"""
+        if not self._initialized:
+            self.begin()
         if not mode in (1, 2, 3):
             raise RuntimeError("Invalid Mode")
         self.at_response("AT+CWMODE=%d" % mode, timeout=3)
@@ -390,6 +397,16 @@ class ESP_ATcontrol:
             if line and line.startswith(b'+CIFSR:STAIP,"'):
                 return str(line[14:-1], 'utf-8')
         raise RuntimeError("Couldn't find IP address")
+
+    def ping(self, host):
+        reply = self.at_response('AT+PING="%s"' % host.strip('"'), timeout=5)
+        for line in reply.split(b'\r\n'):
+            if line and line.startswith(b'+PING:'):
+                try:
+                    return int(line[6:])
+                except ValueError:
+                    return None
+        raise RuntimeError("Couldn't ping")
 
     def nslookup(self, host):
         reply = self.at_response('AT+CIPDOMAIN="%s"' % host.strip('"'), timeout=3)
@@ -429,17 +446,23 @@ class ESP_ATcontrol:
         router = self.remote_AP
         if router and router[0] == ssid:
             return  # we're already connected!
-        reply = self.at_response('AT+CWJAP="'+ssid+'","'+password+'"', timeout=10)
-        if "WIFI CONNECTED" not in reply:
-            raise RuntimeError("Couldn't connect to WiFi")
-        if "WIFI GOT IP" not in reply:
-            raise RuntimeError("Didn't get IP address")
+        for _ in range(3):
+            reply = self.at_response('AT+CWJAP="'+ssid+'","'+password+'"', timeout=15, retries=3)
+            if b'WIFI CONNECTED' not in reply:
+                print("no CONNECTED")
+                raise RuntimeError("Couldn't connect to WiFi")
+            if b'WIFI GOT IP' not in reply:
+                print("no IP")
+                raise RuntimeError("Didn't get IP address")
+            return
 
     def scan_APs(self, retries=3): # pylint: disable=invalid-name
         """Ask the module to scan for access points and return a list of lists
         with name, RSSI, MAC addresses, etc"""
         for _ in range(retries):
             try:
+                if self.mode != self.MODE_STATION:
+                    self.mode = self.MODE_STATION
                 scan = self.at_response("AT+CWLAP", timeout=3).split(b'\r\n')
             except RuntimeError:
                 continue
@@ -504,17 +527,25 @@ class ESP_ATcontrol:
                         break
                     if response[-7:] == b'ERROR\r\n':
                         break
-                    if b'WIFI CONNECTED\r\n' in response:
-                        break
-                    if b'WIFI GOT IP\r\n' in response:
-                        break
-                    if b'ERR CODE:\r\n' in response:
+                    if "AT+CWJAP=" in at_cmd:
+                        if b'WIFI GOT IP\r\n' in response:
+                            break
+                    else:
+                        if b'WIFI CONNECTED\r\n' in response:
+                            break
+                    if b'ERR CODE:' in response:
                         break
                 else:
                     self.hw_flow(True)
             # eat beginning \n and \r
             if self._debug:
                 print("<---", response)
+            # special case, AT+CWJAP= does not return an ok :P
+            if "AT+CWJAP=" in at_cmd and b'WIFI GOT IP\r\n' in response:
+                return response
+            # special case, ping also does not return an OK
+            if "AT+PING" in at_cmd and b'ERROR\r\n' in response:
+                return response
             if response[-4:] != b'OK\r\n':
                 time.sleep(1)
                 continue
@@ -576,6 +607,11 @@ class ESP_ATcontrol:
             pass # fail, see below
         return False
 
+    def factory_reset(self):
+        self.hard_reset()
+        self.at_response("AT+RESTORE", timeout=1)
+        self._initialized = False
+
     def hard_reset(self):
         """Perform a hardware reset by toggling the reset pin, if it was
         defined in the initialization of this object"""
@@ -587,3 +623,4 @@ class ESP_ATcontrol:
             self._uart.baudrate = self._default_baudrate
             time.sleep(3)  # give it a few seconds to wake up
             self._uart.reset_input_buffer()
+            self._initialized = False

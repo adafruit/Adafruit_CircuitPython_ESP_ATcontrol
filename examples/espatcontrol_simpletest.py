@@ -1,27 +1,40 @@
 import board
 import busio
+import time
 from digitalio import DigitalInOut
 import adafruit_espatcontrol
 
-MY_SSID = "my ssid"
-MY_PASSWORD = "the password"
+# Get wifi details and more from a settings.py file
+try:
+    from settings import settings
+except ImportError:
+    print("WiFi settings are kept in settings.py, please add them there!")
+    raise
 
-uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=1)
+uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
 
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=9600,
+                                          reset_pin=resetpin, debug=False)
+print("Resetting ESP module")
+esp.hard_reset()
 
-if not esp.soft_reset():
-    esp.hard_reset()
-    esp.soft_reset()
-
-esp.echo(False)
-print("Connected to AT software version ", esp.get_version())
-if esp.mode != esp.MODE_STATION:
-    esp.mode = esp.MODE_STATION
-print("Mode is now", esp.mode)
-for ap in esp.scan_APs():
-    print(ap)
-esp.join_AP(MY_SSID, MY_PASSWORD)
-print("My IP Address:", esp.local_ip)
+while True:
+    try:
+        print("Checking connection...")
+        while not esp.is_connected:
+            print("Initializing ESP module")
+            #print("Scanning for AP's")
+            #for ap in esp.scan_APs():
+            #    print(ap)
+            # settings dictionary must contain 'ssid' and 'password' at a minimum
+            print("Connecting...")
+            esp.connect(settings)
+            print("Connected to AT software version ", esp.version)
+        print("Pinging 8.8.8.8...", end="")
+        print(esp.ping("8.8.8.8"))
+        time.sleep(10)
+    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+        print("Failed to get data, retrying\n", e)
+        continue
