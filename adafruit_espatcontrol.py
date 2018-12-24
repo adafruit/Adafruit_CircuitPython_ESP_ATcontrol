@@ -88,12 +88,17 @@ class ESP_ATcontrol:
     STATUS_NOTCONNECTED = 5
     USER_AGENT = "esp-idf/1.0 esp32"
 
-    def __init__(self, uart, baudrate, *,
+    def __init__(self, uart, default_baudrate, *, run_baudrate=None,
                  rts_pin = None, reset_pin=None, debug=False):
         # this function doesn't try to do any sync'ing, just sets up
         # the hardware, that way nothing can unexpectedly fail!
         self._uart = uart
-        uart.baudrate = baudrate
+        if not run_baudrate:
+            run_baudrate = default_baudrate
+        self._default_baudrate = default_baudrate
+        self._run_baudrate = run_baudrate
+        self._uart.baudrate = default_baudrate
+
         self._reset_pin = reset_pin
         self._rts_pin = rts_pin
         if self._reset_pin:
@@ -101,7 +106,8 @@ class ESP_ATcontrol:
             self._reset_pin.value = True
         if self._rts_pin:
             self._rts_pin.direction = Direction.OUTPUT
-            self._rts_pin.value = False
+        self.hw_flow(True)
+
         self._debug = debug
         self._versionstrings = []
         self._version = None
@@ -117,7 +123,7 @@ class ESP_ATcontrol:
                     self.soft_reset()
                 self.echo(False)
                 # set flow control if required
-                self.baudrate = self._uart.baudrate
+                self.baudrate = self._run_baudrate
                 # get and cache versionstring
                 self.get_version()
                 print(self.version)
@@ -148,7 +154,7 @@ class ESP_ATcontrol:
         if ssl:
             conntype = self.TYPE_SSL
             port = 443
-        if not self.socket_connect(conntype, domain, port, keepalive=90, retries=3):
+        if not self.socket_connect(conntype, domain, port, keepalive=10, retries=3):
             raise RuntimeError("Failed to connect to host")
         request = "GET "+path+" HTTP/1.1\r\n"
         request += "Host: "+domain+"\r\n"
@@ -204,7 +210,7 @@ class ESP_ATcontrol:
     def socket(self):
         return ESP_ATcontrol_socket(self)
 
-    def socket_connect(self, conntype, remote, remote_port, *, keepalive=60, retries=1):
+    def socket_connect(self, conntype, remote, remote_port, *, keepalive=10, retries=1):
         """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
         can be an IP address or DNS (we'll do the lookup for you. Remote port
         is integer port on other side. We can't set the local port"""
@@ -222,7 +228,7 @@ class ESP_ATcontrol:
         cmd = 'AT+CIPSTART="'+conntype+'","'+remote+'",'+str(remote_port)+','+str(keepalive)
         replies = self.at_response(cmd, timeout=10, retries=retries).split(b'\r\n')
         for reply in replies:
-            if reply == b'CONNECT':
+            if reply == b'CONNECT' and self.status == self.STATUS_SOCKETOPEN:
                 return True
         return False
 
@@ -235,9 +241,12 @@ class ESP_ATcontrol:
         while (time.monotonic() - stamp) < timeout:
             if self._uart.in_waiting:
                 prompt += self._uart.read(1)
+                self.hw_flow(False)
                 #print(prompt)
                 if prompt[-1:] == b'>':
                     break
+            else:
+                self.hw_flow(True)
         if not prompt or (prompt[-1:] != b'>'):
             raise RuntimeError("Didn't get data prompt for sending")
         self._uart.reset_input_buffer()
@@ -265,13 +274,10 @@ class ESP_ATcontrol:
         stamp = time.monotonic()
         ipd_start = b'+IPD,'
         while (time.monotonic() - stamp) < timeout:
-            if self._rts_pin:
-                self._rts_pin.value = False # start the floooow
             if self._uart.in_waiting:
                 stamp = time.monotonic()  # reset timestamp when there's data!
                 if not incoming_bytes:
-                    if self._rts_pin:
-                        self._rts_pin.value = True # stop the flow
+                    self.hw_flow(False) # stop the flow
                     # read one byte at a time
                     self._IPDpacket[i] = self._uart.read(1)[0]
                     if chr(self._IPDpacket[0]) != '+':
@@ -289,8 +295,7 @@ class ESP_ATcontrol:
                             raise RuntimeError("Parsing error during receive", s)
                         i = 0  # reset the input buffer now that we know the size
                 else:
-                    if self._rts_pin:
-                        self._rts_pin.value = True # stop the flow
+                    self.hw_flow(False) # stop the flow
                     # read as much as we can!
                     toread = min(incoming_bytes-i, self._uart.in_waiting)
                     #print("i ", i, "to read:", toread)
@@ -301,6 +306,8 @@ class ESP_ATcontrol:
                         gc.collect()
                         bundle += self._IPDpacket[0:i]
                         i = incoming_bytes = 0
+            else: # no data waiting
+                self.hw_flow(True) # start the floooow
         else:
             #print("TIMED OUT")
             pass
@@ -468,13 +475,21 @@ class ESP_ATcontrol:
                     self._version = str(line, 'utf-8')
         return self._version
 
+
+    def hw_flow(self, flag):
+        if self._rts_pin:
+            self._rts_pin.value = not flag
+
     def at_response(self, at_cmd, timeout=5, retries=3):
         """Send an AT command, check that we got an OK response,
         and then cut out the reply lines to return. We can set
         a variable timeout (how long we'll wait for response) and
         how many times to retry before giving up"""
         for _ in range(retries):
-            self._uart.reset_input_buffer()
+            self.hw_flow(True)    # allow any remaning data to stream in
+            time.sleep(0.1)       # wait for uart data
+            self._uart.reset_input_buffer()  # flush it
+            self.hw_flow(False)   # and shut off flow control again
             if self._debug:
                 print("--->", at_cmd)
             self._uart.write(bytes(at_cmd, 'utf-8'))
@@ -484,6 +499,7 @@ class ESP_ATcontrol:
             while (time.monotonic() - stamp) < timeout:
                 if self._uart.in_waiting:
                     response += self._uart.read(1)
+                    self.hw_flow(False)
                     if response[-4:] == b'OK\r\n':
                         break
                     if response[-7:] == b'ERROR\r\n':
@@ -494,6 +510,8 @@ class ESP_ATcontrol:
                         break
                     if b'ERR CODE:\r\n' in response:
                         break
+                else:
+                    self.hw_flow(True)
             # eat beginning \n and \r
             if self._debug:
                 print("<---", response)
@@ -566,5 +584,6 @@ class ESP_ATcontrol:
             self._reset_pin.value = False
             time.sleep(0.1)
             self._reset_pin.value = True
+            self._uart.baudrate = self._default_baudrate
             time.sleep(3)  # give it a few seconds to wake up
             self._uart.reset_input_buffer()
