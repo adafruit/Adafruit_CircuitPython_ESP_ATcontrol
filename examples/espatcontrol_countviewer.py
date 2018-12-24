@@ -43,13 +43,13 @@ DATA_LOCATION = ["stargazers_count"]
 """
 
 # Youtube stats
-"""
+
 CHANNEL_ID = "UCpOlOeQjj7EsVnDh3zuCgsA" # this isn't a secret but you have to look it up
 DATA_SOURCE = "https://www.googleapis.com/youtube/v3/channels/?part=statistics&id=" \
               + CHANNEL_ID +"&key="+settings['youtube_token']
 # try also 'viewCount' or 'videoCount
 DATA_LOCATION = ["items", 0, "statistics", "subscriberCount"]
-"""
+
 
 # Subreddit subscribers
 """
@@ -64,8 +64,10 @@ DATA_LOCATION = ["skulls"]
 """
 
 # Twitter followers
+"""
 DATA_SOURCE = "https://cdn.syndication.twimg.com/widgets/followbutton/info.json?screen_names=adafruit"
 DATA_LOCATION = [0, "followers_count"]
+"""
 
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
