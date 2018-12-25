@@ -7,7 +7,7 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-from Adafruit_CircuitPython_ESP_ATcontrol import adafruit_espatcontrol
+import adafruit_espatcontrol
 import neopixel
 import ujson
 import adafruit_fancyled.adafruit_fancyled as fancy

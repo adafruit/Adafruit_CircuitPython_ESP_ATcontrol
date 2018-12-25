@@ -3,7 +3,7 @@
 
 settings = {
     'ssid' : 'my access point',
-    'password' : 'hunter2',
+    'password' : 'my password',
     'timezone' : -5, # this is offset from UTC
     'github_token' : 'abcdefghij0123456789',
 }

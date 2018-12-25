@@ -8,8 +8,7 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-import audioio
-from Adafruit_CircuitPython_ESP_ATcontrol import adafruit_espatcontrol
+import adafruit_espatcontrol
 from adafruit_ht16k33 import segments
 import neopixel
 import ujson
@@ -82,6 +81,7 @@ if NEOPIXELS_ON_CHANGE:
 
 # music!
 if PLAY_SOUND_ON_CHANGE:
+    import audioio
     wave_file = open("coin.wav", "rb")
     wave = audioio.WaveFile(wave_file)
 
