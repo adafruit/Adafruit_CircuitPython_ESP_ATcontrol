@@ -42,9 +42,8 @@ while True:
         header, body = esp.request_url(URL+str(counter), type = "POST")
         counter = counter + 1
         print("OK")
-    except RuntimeError as e:
-        print("Failed to connect, retrying")
-        print(e)
+    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+        print("Failed to get data, retrying\n", e)
         continue
     header = body = None
     time.sleep(15)
