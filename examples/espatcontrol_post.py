@@ -46,5 +46,5 @@ while True:
         print("Failed to connect, retrying")
         print(e)
         continue
-    headet = body = None
+    header = body = None
     time.sleep(15)
