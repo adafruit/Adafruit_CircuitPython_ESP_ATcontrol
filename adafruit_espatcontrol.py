@@ -147,7 +147,7 @@ class ESP_ATcontrol:
             except OKError:
                 pass #retry
 
-    def request_url(self, url, ssl=False):
+    def request_url(self, url, ssl=False, request_type="GET"):
         """Send an HTTP request to the URL. If the URL starts with https://
         we will force SSL and use port 443. Otherwise, you can select whether
         you want ssl by passing in a flag."""
@@ -165,7 +165,7 @@ class ESP_ATcontrol:
             port = 443
         if not self.socket_connect(conntype, domain, port, keepalive=10, retries=3):
             raise RuntimeError("Failed to connect to host")
-        request = "GET "+path+" HTTP/1.1\r\n"
+        request = request_type+" "+path+" HTTP/1.1\r\n"
         request += "Host: "+domain+"\r\n"
         request += "User-Agent: "+self.USER_AGENT+"\r\n"
         request += "\r\n"
