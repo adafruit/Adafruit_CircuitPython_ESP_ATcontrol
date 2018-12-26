@@ -24,12 +24,13 @@ uart = busio.UART(board.TX, board.RX, timeout=0.1)
 
 print("Post to a URL", URL)
 
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin, run_baudrate = 115200, rts_pin=rtspin, debug=True)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, reset_pin=resetpin,
+                                          run_baudrate = 115200, rts_pin=rtspin, debug=True)
 print("Resetting ESP module")
 esp.hard_reset()
 print("Connected to AT software version", esp.get_version())
 
-counter = 0 
+counter = 0
 while True:
     try:
         # Connect to WiFi if not already
@@ -39,7 +40,7 @@ while True:
         print("Connected to", esp.remote_AP)
         # great, lets get the data
         print("Posting request URL...", end='')
-        header, body = esp.request_url(URL+str(counter), type = "POST")
+        header, body = esp.request_url(URL+str(counter), request_type = "POST")
         counter = counter + 1
         print("OK")
     except (RuntimeError, adafruit_espatcontrol.OKError) as e:
