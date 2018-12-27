@@ -83,12 +83,15 @@ while True:
     print('-'*40)
     # For mystery reasons, there's two numbers before and after the json data
     lines = body.split(b'\r\n')  # so split into lines
-    value = get_value(lines[1], DATA_LOCATION) # an get the middle chunk
-    builtin[0] = (100, 100, 100)
-    if not value:
+    try:
+        value = get_value(lines[1], DATA_LOCATION) # an get the middle chunk
+        builtin[0] = (100, 100, 100)
+        if not value:
+            continue
+        print(times, the_time, "value:", value)
+    except IndexError as e:
+        print("IndexError processing Body, retrying\n", e)
         continue
-    print(times, the_time, "value:", value)
-
     if last_value != value:
         color = int(value[1:],16)
         red = color >> 16 & 0xFF
