@@ -312,6 +312,9 @@ class ESP_ATcontrol:
                         except ValueError:
                             raise RuntimeError("Parsing error during receive", ipd)
                         i = 0  # reset the input buffer now that we know the size
+                    elif i > 20:
+                        i = 0 # Hmm we somehow didnt get a proper +IPD packet? start over
+
                 else:
                     self.hw_flow(False) # stop the flow
                     # read as much as we can!
@@ -371,6 +374,7 @@ class ESP_ATcontrol:
             self.begin()
         try:
             self.echo(False)
+            self.baudrate = self.baudrate
             stat = self.status
             if stat in (self.STATUS_APCONNECTED,
                         self.STATUS_SOCKETOPEN,
