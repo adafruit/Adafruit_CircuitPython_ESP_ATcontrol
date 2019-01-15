@@ -86,6 +86,8 @@ def request(method, url, data=None, json=None, headers={}, stream=None):
         s.write(b"%s /%s HTTP/1.0\r\n" % (method, path))
         if not "Host" in headers:
             s.write(b"Host: %s\r\n" % host)
+        if not "User-Agent" in headers:
+            s.write(b"User-Agent: Adafruit CircuitPython\r\n")
         # Iterate over keys to avoid tuple alloc
         for k in headers:
             s.write(k)

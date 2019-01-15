@@ -133,45 +133,6 @@ class ESP_ATcontrol:
             except OKError:
                 pass #retry
 
-    def request_url(self, url, ssl=False, request_type="GET"):
-        """Send an HTTP request to the URL. If the URL starts with https://
-        we will force SSL and use port 443. Otherwise, you can select whether
-        you want ssl by passing in a flag."""
-        if url.startswith("https://"):
-            ssl = True
-            url = url[8:]
-        if url.startswith("http://"):
-            url = url[7:]
-        domain, path = url.split('/', 1)
-        path = '/'+path
-        port = 80
-        conntype = self.TYPE_TCP
-        if ssl:
-            conntype = self.TYPE_SSL
-            port = 443
-        if not self.socket_connect(conntype, domain, port, keepalive=10, retries=3):
-            raise RuntimeError("Failed to connect to host")
-        request = request_type+" "+path+" HTTP/1.1\r\n"
-        request += "Host: "+domain+"\r\n"
-        request += "User-Agent: "+self.USER_AGENT+"\r\n"
-        request += "\r\n"
-        try:
-            self.socket_send(bytes(request, 'utf-8'))
-        except RuntimeError:
-            raise
-
-        reply = self.socket_receive(timeout=3).split(b'\r\n')
-        if self._debug:
-            print(reply)
-        try:
-            headerbreak = reply.index(b'')
-        except ValueError:
-            raise RuntimeError("Reponse wasn't valid HTML")
-        header = reply[0:headerbreak]
-        data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
-        self.socket_disconnect()
-        return (header, data)
-
     def connect(self, settings):
         """Repeatedly try to connect to an access point with the details in
         the passed in 'settings' dictionary. Be sure 'ssid' and 'password' are
