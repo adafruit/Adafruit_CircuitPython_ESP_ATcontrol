@@ -9,6 +9,7 @@ import board
 import busio
 from digitalio import DigitalInOut
 import adafruit_espatcontrol
+import adafruit_espatcontrol_requests as requests
 from adafruit_ht16k33 import segments
 import neopixel
 import ujson
@@ -68,6 +69,8 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=921600,
                                           rts_pin=rtspin, debug=True)
 esp.hard_reset()
 
+requests.set_interface(esp)
+
 # Create the I2C interface.
 i2c = busio.I2C(board.SCL, board.SDA)
 # Attach a 7 segment display and display -'s so we know its not live yet
@@ -105,49 +108,40 @@ def chime_light():
             pixels.fill((i, i, i))
         pixels.fill(0)
 
-def get_value(response, location):
-    """Extract a value from a json object, based on the path in 'location'"""
-    try:
-        print("Parsing JSON response...", end='')
-        json = ujson.loads(response)
-        print("parsed OK!")
-        for x in location:
-            json = json[x]
-        return json
-    except ValueError:
-        print("Failed to parse json, retrying")
-        return None
-
 while True:
     try:
         while not esp.is_connected:
             # settings dictionary must contain 'ssid' and 'password' at a minimum
             esp.connect(settings)
-        # great, lets get the data
-        # get the time
+
         the_time = esp.sntp_time
 
+        # great, lets get the data
         print("Retrieving data source...", end='')
-        header, body = esp.request_url(DATA_SOURCE)
+        r = requests.get(DATA_SOURCE)
         print("Reply is OK!")
     except (RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
-    #print('-'*40, "Size: ", len(body))
-    #print(str(body, 'utf-8'))
+    #print('-'*40,)
+    #print("Headers: ", r.headers)
+    #print("Text:", r.text)
     #print('-'*40)
-    value = get_value(body, DATA_LOCATION)
+
+    value = r.json()
+    for x in DATA_LOCATION:
+        value = value[x]
     if not value:
         continue
     print(times, the_time, "value:", value)
-    display.print(int(value))
 
     if last_value != value:
         chime_light() # animate the neopixels
         last_value = value
     times += 1
+
     # normally we wouldn't have to do this, but we get bad fragments
-    header = body = None
+    r = value = None
     gc.collect()
     print(gc.mem_free())  # pylint: disable=no-member
     time.sleep(TIME_BETWEEN_QUERY)
