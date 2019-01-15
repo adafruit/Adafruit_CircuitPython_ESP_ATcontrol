@@ -60,20 +60,6 @@ class OKError(Exception):
     """The exception thrown when we didn't get acknowledgement to an AT command"""
     pass
 
-class ESP_ATcontrol_socket:
-    """A 'socket' compatible interface thru the ESP AT command set"""
-    def __init__(self, esp):
-        self._esp = esp
-
-    def getaddrinfo(self, host, port,  # pylint: disable=too-many-arguments
-                    family=0, socktype=0, proto=0, flags=0): # pylint: disable=unused-argument
-        """Given a hostname and a port name, return a 'socket.getaddrinfo'
-        compatible list of tuples. Honestly, we ignore anything but host & port"""
-        if not isinstance(port, int):
-            raise RuntimeError("port must be an integer")
-        ipaddr = self._esp.nslookup(host)
-        return [(family, socktype, proto, '', (ipaddr, port))]
-
 class ESP_ATcontrol:
     """A wrapper for AT commands to a connected ESP8266 or ESP32 module to do
     some very basic internetting. The ESP module must be pre-programmed with
@@ -192,10 +178,12 @@ class ESP_ATcontrol:
         defined in the settings dict! If 'timezone' is set, we'll also configure
         SNTP"""
         # Connect to WiFi if not already
+	retries = 3
         while True:
             try:
-                if not self._initialized:
+                if not self._initialized or retries == 0:
                     self.begin()
+		    retries = 3
                 AP = self.remote_AP           # pylint: disable=invalid-name
                 print("Connected to", AP[0])
                 if AP[0] != settings['ssid']:
@@ -210,6 +198,7 @@ class ESP_ATcontrol:
                 return  # yay!
             except (RuntimeError, OKError) as exp:
                 print("Failed to connect, retrying\n", exp)
+		retries -= 1
                 continue
 
     # *************************** SOCKET SETUP ****************************
