@@ -44,7 +44,8 @@ class socket:
 
     def read(self, num=0):
         if num == 0:
-            ret = self._buffer
+            # read as much as we can
+            ret = self._buffer + _the_interface.socket_receive(timeout=1)
             self._buffer = b''
         else:
             ret = self._buffer[:num]
@@ -52,4 +53,6 @@ class socket:
         return ret
 
     def close(self):
+        # read whatever's left
+        self._buffer = self._buffer + _the_interface.socket_receive(timeout=1)
         _the_interface.socket_disconnect()
