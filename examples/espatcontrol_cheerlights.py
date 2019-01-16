@@ -10,7 +10,6 @@ from digitalio import DigitalInOut
 import adafruit_espatcontrol
 import adafruit_espatcontrol_requests as requests
 import neopixel
-import ujson
 import adafruit_fancyled.adafruit_fancyled as fancy
 
 # Get wifi details and more from a settings.py file

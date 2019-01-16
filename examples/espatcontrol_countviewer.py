@@ -12,7 +12,6 @@ import adafruit_espatcontrol
 import adafruit_espatcontrol_requests as requests
 from adafruit_ht16k33 import segments
 import neopixel
-import ujson
 
 # Get wifi details and more from a settings.py file
 try:

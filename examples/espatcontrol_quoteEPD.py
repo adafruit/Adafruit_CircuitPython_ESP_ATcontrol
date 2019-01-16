@@ -4,11 +4,6 @@ stars, price of bitcoin, twitter followers... if you can find something that
 spits out JSON data, we can display it!
 """
 
-import sys
-sys.path.append('/Adafruit_CircuitPython_EPD')
-sys.path.append('/Adafruit_CircuitPython_framebuf')
-print(sys.path)
-
 import gc
 import time
 import board
@@ -70,17 +65,17 @@ def get_value(response, location):
 # return a list of lines with wordwrapping
 def wrap_nicely(string, max_chars):
     words = string.split(' ')
-    lines = []
-    line = ""
+    the_lines = []
+    the_line = ""
     for w in words:
-        if (len(line+' '+w) <= max_chars):
-            line += ' '+w
+        if len(the_line+' '+w) <= max_chars:
+            the_line += ' '+w
         else:
-            lines.append(line)
-            line = ''+w
-    if line:      # last line remaining
-        lines.append(line)
-    return lines
+            the_lines.append(line)
+            the_line = ''+w
+    if the_line:      # last line remaining
+        the_lines.append(line)
+    return the_lines
 
 def read_le(s):
     # as of this writting, int.from_bytes does not have LE support, DIY!
@@ -94,7 +89,7 @@ def read_le(s):
 class BMPError(Exception):
     pass
 
-def draw_bmp(filename, x, y):
+def draw_bmp(filename, x, y): # pylint: disable=too-many-locals, too-many-branches
     try:
         with open("/" + filename, "rb") as f:
             print("File opened")
@@ -154,7 +149,7 @@ def draw_bmp(filename, x, y):
     except BMPError as e:
         print("Failed to parse BMP: " + e.args[0])
 
-quote = "Eternal vigilance is not only the price of liberty; eternal vigilance is the price of human decency"
+quote = "Eternal vigilance is not only the price of liberty; eternal vigilance is the price of human decency"  # pylint: disable=line-too-long
 author = "Aldous Huxley"
 lines = wrap_nicely(str(quote, 'utf-8'), (210 - 50)//6)
 print(lines)
