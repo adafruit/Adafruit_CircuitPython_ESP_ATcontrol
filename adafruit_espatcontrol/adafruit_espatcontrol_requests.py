@@ -12,7 +12,7 @@ license='MIT'
 """
 
 import gc
-import adafruit_espatcontrol_socket as socket
+from adafruit_espatcontrol import adafruit_espatcontrol_socket as socket
 
 _the_interface = None   # pylint: disable=invalid-name
 def set_interface(iface):
@@ -71,6 +71,9 @@ def request(method, url, data=None, json=None, headers=None, stream=None):
     or a json dictionary which we will stringify. 'headers' is optional HTTP headers
     sent along. 'stream' is unused in this implementation"""
     global _the_interface   # pylint: disable=global-statement, invalid-name
+
+    if not headers:
+        headers = {}
 
     try:
         proto, dummy, host, path = url.split("/", 3)
