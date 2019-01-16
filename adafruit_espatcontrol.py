@@ -139,12 +139,12 @@ class ESP_ATcontrol:
         defined in the settings dict! If 'timezone' is set, we'll also configure
         SNTP"""
         # Connect to WiFi if not already
-	retries = 3
+        retries = 3
         while True:
             try:
                 if not self._initialized or retries == 0:
                     self.begin()
-		    retries = 3
+                retries = 3
                 AP = self.remote_AP           # pylint: disable=invalid-name
                 print("Connected to", AP[0])
                 if AP[0] != settings['ssid']:
@@ -159,7 +159,7 @@ class ESP_ATcontrol:
                 return  # yay!
             except (RuntimeError, OKError) as exp:
                 print("Failed to connect, retrying\n", exp)
-		retries -= 1
+                retries -= 1
                 continue
 
     # *************************** SOCKET SETUP ****************************
@@ -172,10 +172,6 @@ class ESP_ATcontrol:
             if reply.startswith(b'+CIPMUX:'):
                 return int(reply[8:])
         raise RuntimeError("Bad response to CIPMUX?")
-
-    def socket(self):
-        """Create a 'socket' object"""
-        return ESP_ATcontrol_socket(self)
 
     def socket_connect(self, conntype, remote, remote_port, *, keepalive=10, retries=1):
         """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
@@ -233,7 +229,7 @@ class ESP_ATcontrol:
         return True
 
     def socket_receive(self, timeout=5):
-        # pylint: disable=too-many-nested-blocks
+        # pylint: disable=too-many-nested-blocks, too-many-branches
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
         bundle = []
@@ -287,7 +283,7 @@ class ESP_ATcontrol:
         for x in bundle:
             for char in x:
                 ret[i] = char
-                i+=1
+                i += 1
         for x in bundle:
             del x
         gc.collect()
