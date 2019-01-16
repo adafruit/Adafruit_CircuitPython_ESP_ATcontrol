@@ -12,6 +12,7 @@ license='MIT'
 """
 
 import adafruit_espatcontrol_socket as socket
+import gc
 
 _the_interface = None
 def set_interface(iface):
@@ -31,8 +32,9 @@ class Response:
     def close(self):
         if self.raw:
             self.raw.close()
-            self.raw = None
-        self._cached = None
+            del self.raw
+        del self._cached 
+        gc.collect()
 
     @property
     def content(self):

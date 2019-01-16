@@ -236,7 +236,8 @@ class ESP_ATcontrol:
         # pylint: disable=too-many-nested-blocks
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
-        bundle = b''
+        bundle = []
+        toread = 0
         gc.collect()
         i = 0    # index into our internal packet
         stamp = time.monotonic()
@@ -275,11 +276,22 @@ class ESP_ATcontrol:
                     if i == incoming_bytes:
                         #print(self._ipdpacket[0:i])
                         gc.collect()
-                        bundle += self._ipdpacket[0:i]
+                        bundle.append(self._ipdpacket[0:i])
+                        gc.collect()
                         i = incoming_bytes = 0
             else: # no data waiting
                 self.hw_flow(True) # start the floooow
-        return bundle
+        totalsize = sum([len(x) for x in bundle])
+        ret = bytearray(totalsize)
+        i = 0
+        for x in bundle:
+            for char in x:
+                ret[i] = char
+                i+=1
+        for x in bundle:
+            del x
+        gc.collect()
+        return ret
 
     def socket_disconnect(self):
         """Close any open socket, if there is one"""
