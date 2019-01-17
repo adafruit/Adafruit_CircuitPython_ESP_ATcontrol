@@ -11,6 +11,8 @@ author='Paul Sokolovsky'
 license='MIT'
 """
 
+# pylint: disable=no-name-in-module
+
 import gc
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
