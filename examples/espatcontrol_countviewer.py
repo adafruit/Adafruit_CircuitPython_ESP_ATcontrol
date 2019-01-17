@@ -133,6 +133,7 @@ while True:
     if not value:
         continue
     print(times, the_time, "value:", value)
+    display.print(int(value))
 
     if last_value != value:
         chime_light() # animate the neopixels
