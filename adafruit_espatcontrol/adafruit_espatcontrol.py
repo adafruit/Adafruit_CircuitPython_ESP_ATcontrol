@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-`adafruit_espatcontrol`
+`adafruit_espatcontrol.adafruit_espatcontrol`
 ====================================================
 
 Use the ESP AT command sent to communicate with the Interwebs.
