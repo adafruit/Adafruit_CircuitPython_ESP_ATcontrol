@@ -3,6 +3,7 @@ import board
 import busio
 from digitalio import DigitalInOut
 import adafruit_espatcontrol
+import adafruit_espatcontrol_requests as requests
 
 # Get wifi details and more from a settings.py file
 try:
@@ -22,6 +23,8 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=9600,
 print("Resetting ESP module")
 esp.hard_reset()
 
+requests.set_interface(esp)
+
 while True:
     try:
         print("Checking connection...")
@@ -30,12 +33,12 @@ while True:
             esp.connect(settings)
         # great, lets get the data
         print("Retrieving URL...", end='')
-        header, body = esp.request_url(URL)
-        print("OK")
-
-        print('-'*40)
-        print(str(body, 'utf-8'))
-        print('-'*40)
+        r = requests.get(URL)
+        print("Status:", r.status_code)
+        print("Content type:", r.headers['content-type'])
+        print("Content size:", r.headers['content-length'])
+        print("Encoding:", r.encoding)
+        print("Text:", r.text)
 
         time.sleep(60)
     except (RuntimeError, adafruit_espatcontrol.OKError) as e:

@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-`adafruit_espatcontrol`
+`adafruit_espatcontrol.adafruit_espatcontrol`
 ====================================================
 
 Use the ESP AT command sent to communicate with the Interwebs.
@@ -59,20 +59,6 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_espATcontrol.git"
 class OKError(Exception):
     """The exception thrown when we didn't get acknowledgement to an AT command"""
     pass
-
-class ESP_ATcontrol_socket:
-    """A 'socket' compatible interface thru the ESP AT command set"""
-    def __init__(self, esp):
-        self._esp = esp
-
-    def getaddrinfo(self, host, port,  # pylint: disable=too-many-arguments
-                    family=0, socktype=0, proto=0, flags=0): # pylint: disable=unused-argument
-        """Given a hostname and a port name, return a 'socket.getaddrinfo'
-        compatible list of tuples. Honestly, we ignore anything but host & port"""
-        if not isinstance(port, int):
-            raise RuntimeError("port must be an integer")
-        ipaddr = self._esp.nslookup(host)
-        return [(family, socktype, proto, '', (ipaddr, port))]
 
 class ESP_ATcontrol:
     """A wrapper for AT commands to a connected ESP8266 or ESP32 module to do
@@ -147,55 +133,18 @@ class ESP_ATcontrol:
             except OKError:
                 pass #retry
 
-    def request_url(self, url, ssl=False, request_type="GET"):
-        """Send an HTTP request to the URL. If the URL starts with https://
-        we will force SSL and use port 443. Otherwise, you can select whether
-        you want ssl by passing in a flag."""
-        if url.startswith("https://"):
-            ssl = True
-            url = url[8:]
-        if url.startswith("http://"):
-            url = url[7:]
-        domain, path = url.split('/', 1)
-        path = '/'+path
-        port = 80
-        conntype = self.TYPE_TCP
-        if ssl:
-            conntype = self.TYPE_SSL
-            port = 443
-        if not self.socket_connect(conntype, domain, port, keepalive=10, retries=3):
-            raise RuntimeError("Failed to connect to host")
-        request = request_type+" "+path+" HTTP/1.1\r\n"
-        request += "Host: "+domain+"\r\n"
-        request += "User-Agent: "+self.USER_AGENT+"\r\n"
-        request += "\r\n"
-        try:
-            self.socket_send(bytes(request, 'utf-8'))
-        except RuntimeError:
-            raise
-
-        reply = self.socket_receive(timeout=3).split(b'\r\n')
-        if self._debug:
-            print(reply)
-        try:
-            headerbreak = reply.index(b'')
-        except ValueError:
-            raise RuntimeError("Reponse wasn't valid HTML")
-        header = reply[0:headerbreak]
-        data = b'\r\n'.join(reply[headerbreak+1:])  # put back the way it was
-        self.socket_disconnect()
-        return (header, data)
-
     def connect(self, settings):
         """Repeatedly try to connect to an access point with the details in
         the passed in 'settings' dictionary. Be sure 'ssid' and 'password' are
         defined in the settings dict! If 'timezone' is set, we'll also configure
         SNTP"""
         # Connect to WiFi if not already
+        retries = 3
         while True:
             try:
-                if not self._initialized:
+                if not self._initialized or retries == 0:
                     self.begin()
+                retries = 3
                 AP = self.remote_AP           # pylint: disable=invalid-name
                 print("Connected to", AP[0])
                 if AP[0] != settings['ssid']:
@@ -210,6 +159,7 @@ class ESP_ATcontrol:
                 return  # yay!
             except (RuntimeError, OKError) as exp:
                 print("Failed to connect, retrying\n", exp)
+                retries -= 1
                 continue
 
     # *************************** SOCKET SETUP ****************************
@@ -222,10 +172,6 @@ class ESP_ATcontrol:
             if reply.startswith(b'+CIPMUX:'):
                 return int(reply[8:])
         raise RuntimeError("Bad response to CIPMUX?")
-
-    def socket(self):
-        """Create a 'socket' object"""
-        return ESP_ATcontrol_socket(self)
 
     def socket_connect(self, conntype, remote, remote_port, *, keepalive=10, retries=1):
         """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
@@ -283,10 +229,11 @@ class ESP_ATcontrol:
         return True
 
     def socket_receive(self, timeout=5):
-        # pylint: disable=too-many-nested-blocks
+        # pylint: disable=too-many-nested-blocks, too-many-branches
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
-        bundle = b''
+        bundle = []
+        toread = 0
         gc.collect()
         i = 0    # index into our internal packet
         stamp = time.monotonic()
@@ -312,6 +259,9 @@ class ESP_ATcontrol:
                         except ValueError:
                             raise RuntimeError("Parsing error during receive", ipd)
                         i = 0  # reset the input buffer now that we know the size
+                    elif i > 20:
+                        i = 0 # Hmm we somehow didnt get a proper +IPD packet? start over
+
                 else:
                     self.hw_flow(False) # stop the flow
                     # read as much as we can!
@@ -322,11 +272,22 @@ class ESP_ATcontrol:
                     if i == incoming_bytes:
                         #print(self._ipdpacket[0:i])
                         gc.collect()
-                        bundle += self._ipdpacket[0:i]
+                        bundle.append(self._ipdpacket[0:i])
+                        gc.collect()
                         i = incoming_bytes = 0
             else: # no data waiting
                 self.hw_flow(True) # start the floooow
-        return bundle
+        totalsize = sum([len(x) for x in bundle])
+        ret = bytearray(totalsize)
+        i = 0
+        for x in bundle:
+            for char in x:
+                ret[i] = char
+                i += 1
+        for x in bundle:
+            del x
+        gc.collect()
+        return ret
 
     def socket_disconnect(self):
         """Close any open socket, if there is one"""
@@ -371,6 +332,7 @@ class ESP_ATcontrol:
             self.begin()
         try:
             self.echo(False)
+            self.baudrate = self.baudrate
             stat = self.status
             if stat in (self.STATUS_APCONNECTED,
                         self.STATUS_SOCKETOPEN,

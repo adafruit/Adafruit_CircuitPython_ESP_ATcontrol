@@ -24,7 +24,7 @@ install:
 - pip install circuitpython-build-tools Sphinx sphinx-rtd-theme
 - pip install --force-reinstall pylint==1.9.2
 script:
-- pylint adafruit_espatcontrol.py
+- pylint adafruit_espatcontrol/*.py
 - ([[ ! -d "examples" ]] || pylint --disable=missing-docstring,invalid-name,bad-whitespace examples/*.py)
 - circuitpython-build-bundles --filename_prefix adafruit-circuitpython-espatcontrol --library_location .
 - cd docs && sphinx-build -E -W -b html . _build/html && cd ..
