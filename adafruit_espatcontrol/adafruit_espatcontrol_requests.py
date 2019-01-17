@@ -12,7 +12,7 @@ license='MIT'
 """
 
 import gc
-import adafruit_espatcontrol_socket as socket
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
 _the_interface = None   # pylint: disable=invalid-name
 def set_interface(iface):
