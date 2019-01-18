@@ -122,7 +122,7 @@ def request(method, url, data=None, json=None, headers=None, stream=None):
             sock.write(b"Content-Length: %d\r\n" % len(data))
         sock.write(b"\r\n")
         if data:
-            sock.write(data)
+            sock.write(bytes(data,'utf-8'))
 
         line = sock.readline()
         #print(line)
