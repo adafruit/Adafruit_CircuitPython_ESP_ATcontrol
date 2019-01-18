@@ -10,6 +10,7 @@ import board
 import busio
 from digitalio import DigitalInOut
 from adafruit_espatcontrol import adafruit_espatcontrol
+from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 import ujson
 from adafruit_epd.epd import Adafruit_EPD
 from adafruit_epd.il0373 import Adafruit_IL0373
@@ -47,6 +48,8 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=115200,
                                           reset_pin=resetpin,
                                           rts_pin=rtspin, debug=True)
 esp.hard_reset()
+
+requests.set_interface(esp)
 
 # Extract a value from a json string
 def get_value(response, location):
@@ -172,13 +175,13 @@ while True:
         # great, lets get the data
 
         print("Retrieving data source...", end='')
-        header, body = esp.request_url(DATA_SOURCE)
+        req = requests.get(DATA_SOURCE)
         print("Reply is OK!")
     except (RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
 
-    body = body.split(b'\n')[1]  # unclear why but there's extra data at beginning/end
+    body = req.text
     print('-'*40, "Size: ", len(body))
     print(str(body, 'utf-8'))
     print('-'*40)
@@ -193,13 +196,13 @@ while True:
     start_y = 10
     display.fill(Adafruit_EPD.WHITE)
     draw_bmp("lilblinka.bmp", display.width - 75, display.height - 80)
-    for i,line in enumerate(lines):
+    for i, line in enumerate(lines):
         display.text(line, start_x, start_y+i*10, Adafruit_EPD.BLACK)
     display.text(author, 10, display.height-20, Adafruit_EPD.RED)
     display.display()
 
     # normally we wouldn't have to do this, but we get bad fragments
-    header = body = None
+    req = None
     gc.collect()
     print(gc.mem_free())  # pylint: disable=no-member
     time.sleep(TIME_BETWEEN_QUERY)
