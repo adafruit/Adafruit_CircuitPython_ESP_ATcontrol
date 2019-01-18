@@ -54,7 +54,9 @@ while True:
         data=counter
         feed='test'
         payload={'value':data}
-        response=requests.post("https://io.adafruit.com/api/v2/"+settings['aio_username']+"/feeds/"+feed+"/data",json=payload,headers={bytes("X-AIO-KEY","utf-8"):bytes(settings['aio_key'],"utf-8")})
+        response=requests.post(
+            "https://io.adafruit.com/api/v2/"+settings['aio_username']+"/feeds/"+feed+"/data",
+            json=payload,headers={bytes("X-AIO-KEY","utf-8"):bytes(settings['aio_key'],"utf-8")})
         print(response.json())
         response.close()
         counter = counter + 1
@@ -63,3 +65,4 @@ while True:
         print("Failed to get data, retrying\n", e)
         continue
     response = None
+    time.sleep(10)
