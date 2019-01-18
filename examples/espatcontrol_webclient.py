@@ -2,8 +2,8 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-import adafruit_espatcontrol
-import adafruit_espatcontrol_requests as requests
+from adafruit_espatcontrol import adafruit_espatcontrol
+from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 
 # Get wifi details and more from a settings.py file
 try:

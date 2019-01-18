@@ -2,13 +2,14 @@
 This example will query ThingSpeak channel 1417 "CheerLights" and display the
 color on a NeoPixel ring or strip
 """
+
 import gc
 import time
 import board
 import busio
 from digitalio import DigitalInOut
-import adafruit_espatcontrol
-import adafruit_espatcontrol_requests as requests
+from adafruit_espatcontrol import adafruit_espatcontrol
+from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 import neopixel
 import adafruit_fancyled.adafruit_fancyled as fancy
 
