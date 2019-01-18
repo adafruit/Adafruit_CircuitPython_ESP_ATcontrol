@@ -6,5 +6,6 @@ settings = {
     'password' : 'my password',
     'timezone' : -5, # this is offset from UTC
     'github_token' : 'abcdefghij0123456789',
-    'aio_feed_webhook' : 'abcdefghij0123456789',
+    'aio_username' : 'myusername',
+    'aio_key' : 'abcdefghij0123456789',
 }

@@ -9,7 +9,7 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-from Adafruit_CircuitPython_ESP_ATcontrol import adafruit_espatcontrol
+from adafruit_espatcontrol import adafruit_espatcontrol
 import ujson
 from adafruit_epd.epd import Adafruit_EPD
 from adafruit_epd.il0373 import Adafruit_IL0373
