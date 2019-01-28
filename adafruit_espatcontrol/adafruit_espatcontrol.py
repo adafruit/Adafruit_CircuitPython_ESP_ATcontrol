@@ -384,9 +384,11 @@ class ESP_ATcontrol:
         """Ping the IP or hostname given, returns ms time or None on failure"""
         reply = self.at_response('AT+PING="%s"' % host.strip('"'), timeout=5)
         for line in reply.split(b'\r\n'):
-            if line and line.startswith(b'+PING:'):
+            if line and line.startswith(b'+'):
                 try:
-                    return int(line[6:])
+                    if line[1:5] == b'PING':
+                        return int(line[6:])
+                    return int(line[1:])
                 except ValueError:
                     return None
         raise RuntimeError("Couldn't ping")
