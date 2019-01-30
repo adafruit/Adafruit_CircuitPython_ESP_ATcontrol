@@ -49,6 +49,6 @@ while True:
         print("Pinging 8.8.8.8...", end="")
         print(esp.ping("8.8.8.8"))
         time.sleep(10)
-    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError,RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue

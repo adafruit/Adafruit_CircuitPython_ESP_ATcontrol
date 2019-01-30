@@ -52,6 +52,6 @@ while True:
         print("Text:", r.text)
 
         time.sleep(60)
-    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue

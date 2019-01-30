@@ -177,7 +177,7 @@ while True:
         print("Retrieving data source...", end='')
         req = requests.get(DATA_SOURCE)
         print("Reply is OK!")
-    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
 

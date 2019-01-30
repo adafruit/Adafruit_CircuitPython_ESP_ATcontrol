@@ -8,8 +8,8 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-import adafruit_espatcontrol
-import adafruit_espatcontrol_requests as requests
+from adafruit_espatcontrol import adafruit_espatcontrol
+from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 from adafruit_ht16k33 import segments
 import neopixel
 
@@ -119,7 +119,7 @@ while True:
         print("Retrieving data source...", end='')
         r = requests.get(DATA_SOURCE)
         print("Reply is OK!")
-    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
     #print('-'*40,)

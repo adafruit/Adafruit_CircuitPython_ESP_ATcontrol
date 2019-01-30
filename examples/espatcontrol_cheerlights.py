@@ -63,7 +63,7 @@ while True:
         r = requests.get(DATA_SOURCE)
         builtin[0] = (0, 0, 100)
         print("Reply is OK!")
-    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
     print('-'*40,)
