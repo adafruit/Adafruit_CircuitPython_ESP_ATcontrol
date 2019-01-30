@@ -11,8 +11,22 @@ except ImportError:
     print("WiFi settings are kept in settings.py, please add them there!")
     raise
 
+# With a Metro or Feather M4
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
+
+# With a Particle Argon
+"""
+RX = board.ESP_TX
+TX = board.ESP_RX
+resetpin = DigitalInOut(board.ESP_WIFI_EN)
+rtspin = DigitalInOut(board.ESP_CTS)
+uart = busio.UART(TX, RX, timeout=0.1)
+esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+from digitalio import Direction
+esp_boot.direction = Direction.OUTPUT
+esp_boot.value = True
+"""
 
 print("ESP AT commands")
 esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=9600,
