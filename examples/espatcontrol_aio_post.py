@@ -61,7 +61,7 @@ while True:
         response.close()
         counter = counter + 1
         print("OK")
-    except (RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
     response = None
