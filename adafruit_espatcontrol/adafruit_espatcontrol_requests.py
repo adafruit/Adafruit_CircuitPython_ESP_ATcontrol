@@ -62,8 +62,11 @@ class Response:
 
     def json(self):
         """The HTTP content, parsed into a json dictionary"""
-        import ujson
-        return ujson.loads(self.content)
+        try:
+            import json as json_module
+        except ImportError:
+            import ujson as json_module
+        return json_module.loads(self.content)
 
 
 # pylint: disable=too-many-branches, too-many-statements, unused-argument, too-many-arguments, too-many-locals
@@ -115,8 +118,11 @@ def request(method, url, data=None, json=None, headers=None, stream=None):
             sock.write(b"\r\n")
         if json is not None:
             assert data is None
-            import ujson
-            data = ujson.dumps(json)
+            try:
+                import json as json_module
+            except ImportError:
+                import ujson as json_module
+            data = json_module.dumps(json)
             sock.write(b"Content-Type: application/json\r\n")
         if data:
             sock.write(b"Content-Length: %d\r\n" % len(data))
