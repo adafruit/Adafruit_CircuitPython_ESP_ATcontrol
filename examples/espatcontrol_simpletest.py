@@ -14,6 +14,7 @@ except ImportError:
 # With a Metro or Feather M4
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
+rtspin = DigitalInOut(board.D6)
 
 # With a Particle Argon
 """
@@ -28,23 +29,31 @@ esp_boot.direction = Direction.OUTPUT
 esp_boot.value = True
 """
 
+
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=9600,
-                                          reset_pin=resetpin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
+                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
 print("Resetting ESP module")
 esp.hard_reset()
 
+first_pass = True
 while True:
     try:
-        print("Checking connection...")
-        while not esp.is_connected:
-            print("Initializing ESP module")
+        if first_pass :
+            print("Scanning for AP's")
+            for ap in esp.scan_APs():
+                print(ap)
+            print("Checking connection...")
+            # secrets dictionary must contain 'ssid' and 'password' at a minimum
             print("Connecting...")
             esp.connect(secrets)
             print("Connected to AT software version ", esp.version)
+            first_pass = False
         print("Pinging 8.8.8.8...", end="")
         print(esp.ping("8.8.8.8"))
         time.sleep(10)
     except (ValueError,RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
+        print("Resetting ESP module")
+        esp.hard_reset()
         continue

@@ -450,7 +450,7 @@ class ESP_ATcontrol:
             try:
                 if self.mode != self.MODE_STATION:
                     self.mode = self.MODE_STATION
-                scan = self.at_response("AT+CWLAP", timeout=3).split(b'\r\n')
+                scan = self.at_response("AT+CWLAP", timeout=5).split(b'\r\n')
             except RuntimeError:
                 continue
             routers = []
