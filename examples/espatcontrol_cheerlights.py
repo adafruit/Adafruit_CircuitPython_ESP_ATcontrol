@@ -13,11 +13,11 @@ from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 import neopixel
 import adafruit_fancyled.adafruit_fancyled as fancy
 
-# Get wifi details and more from a settings.py file
+# Get wifi details and more from a secrets.py file
 try:
-    from settings import settings
+    from espatcontrol_secrets import secrets
 except ImportError:
-    print("WiFi settings are kept in settings.py, please add them there!")
+    print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
 #              CONFIGURATION
@@ -54,8 +54,8 @@ while True:
     try:
         while not esp.is_connected:
             builtin[0] = (100, 0, 0)
-            # settings dictionary must contain 'ssid' and 'password' at a minimum
-            esp.connect(settings)
+            # secrets dictionary must contain 'ssid' and 'password' at a minimum
+            esp.connect(secrets)
         builtin[0] = (0, 100, 0)
         # great, lets get the data
         print("Retrieving data source...", end='')

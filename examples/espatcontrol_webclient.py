@@ -5,11 +5,11 @@ from digitalio import DigitalInOut
 from adafruit_espatcontrol import adafruit_espatcontrol
 from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 
-# Get wifi details and more from a settings.py file
+# Get wifi details and more from a secrets.py file
 try:
-    from settings import settings
+    from espatcontrol_secrets import secrets
 except ImportError:
-    print("WiFi settings are kept in settings.py, please add them there!")
+    print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
 # With a Metro or Feather M4
@@ -41,7 +41,7 @@ while True:
         print("Checking connection...")
         while not esp.is_connected:
             print("Connecting...")
-            esp.connect(settings)
+            esp.connect(secrets)
         # great, lets get the data
         print("Retrieving URL...", end='')
         r = requests.get(URL)
