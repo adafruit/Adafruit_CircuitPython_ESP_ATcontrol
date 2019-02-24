@@ -13,11 +13,11 @@ from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 from adafruit_ht16k33 import segments
 import neopixel
 
-# Get wifi details and more from a settings.py file
+# Get wifi details and more from a secrets.py file
 try:
-    from settings import settings
+    from secrets import secrets
 except ImportError:
-    print("WiFi settings are kept in settings.py, please add them there!")
+    print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
 #              CONFIGURATION
@@ -33,14 +33,14 @@ DATA_LOCATION = ["bpi", "USD", "rate_float"]
 
 # Github stars! You can query 1ce a minute without an API key token
 #DATA_SOURCE = "https://api.github.com/repos/adafruit/circuitpython"
-#if 'github_token' in settings:
-#    DATA_SOURCE += "?access_token="+settings['github_token']
+#if 'github_token' in secrets:
+#    DATA_SOURCE += "?access_token="+secrets['github_token']
 #DATA_LOCATION = ["stargazers_count"]
 
 # Youtube stats
 #CHANNEL_ID = "UCpOlOeQjj7EsVnDh3zuCgsA" # this isn't a secret but you have to look it up
 #DATA_SOURCE = "https://www.googleapis.com/youtube/v3/channels/?part=statistics&id=" \
-#              + CHANNEL_ID +"&key="+settings['youtube_token']
+#              + CHANNEL_ID +"&key="+secrets['youtube_token']
 # try also 'viewCount' or 'videoCount
 #DATA_LOCATION = ["items", 0, "statistics", "subscriberCount"]
 
@@ -50,7 +50,7 @@ DATA_LOCATION = ["bpi", "USD", "rate_float"]
 #DATA_LOCATION = ["data", "subscribers"]
 
 # Hackaday Skulls (likes), requires an API key
-#DATA_SOURCE = "https://api.hackaday.io/v1/projects/1340?api_key="+settings['hackaday_token']
+#DATA_SOURCE = "https://api.hackaday.io/v1/projects/1340?api_key="+secrets['hackaday_token']
 #DATA_LOCATION = ["skulls"]
 
 # Twitter followers
@@ -58,9 +58,26 @@ DATA_LOCATION = ["bpi", "USD", "rate_float"]
 #"screen_names=adafruit"
 #DATA_LOCATION = [0, "followers_count"]
 
+# on metro_m4
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
-rtspin = DigitalInOut(board.D9)
+rtspin = DigitalInOut(board.D6)
+
+
+# With a Particle Argon
+"""
+RX = board.ESP_TX
+TX = board.ESP_RX
+resetpin = DigitalInOut(board.ESP_WIFI_EN)
+rtspin = DigitalInOut(board.ESP_CTS)
+uart = busio.UART(TX, RX, timeout=0.1)
+esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+from digitalio import Direction
+esp_boot.direction = Direction.OUTPUT
+esp_boot.value = True
+"""
+
+
 
 # Create the connection to the co-processor and reset
 esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=921600,
@@ -110,8 +127,8 @@ def chime_light():
 while True:
     try:
         while not esp.is_connected:
-            # settings dictionary must contain 'ssid' and 'password' at a minimum
-            esp.connect(settings)
+            # secrets dictionary must contain 'ssid' and 'password' at a minimum
+            esp.connect(secrets)
 
         the_time = esp.sntp_time
 

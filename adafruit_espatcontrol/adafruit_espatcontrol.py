@@ -133,10 +133,10 @@ class ESP_ATcontrol:
             except OKError:
                 pass #retry
 
-    def connect(self, settings):
+    def connect(self, secrets):
         """Repeatedly try to connect to an access point with the details in
-        the passed in 'settings' dictionary. Be sure 'ssid' and 'password' are
-        defined in the settings dict! If 'timezone' is set, we'll also configure
+        the passed in 'secrets' dictionary. Be sure 'ssid' and 'password' are
+        defined in the secrets dict! If 'timezone' is set, we'll also configure
         SNTP"""
         # Connect to WiFi if not already
         retries = 3
@@ -147,13 +147,13 @@ class ESP_ATcontrol:
                 retries = 3
                 AP = self.remote_AP           # pylint: disable=invalid-name
                 print("Connected to", AP[0])
-                if AP[0] != settings['ssid']:
-                    self.join_AP(settings['ssid'], settings['password'])
-                    if 'timezone' in settings:
-                        tzone = settings['timezone']
+                if AP[0] != secrets['ssid']:
+                    self.join_AP(secrets['ssid'], secrets['password'])
+                    if 'timezone' in secrets:
+                        tzone = secrets['timezone']
                         ntp = None
-                        if 'ntp_server' in settings:
-                            ntp = settings['ntp_server']
+                        if 'ntp_server' in secrets:
+                            ntp = secrets['ntp_server']
                         self.sntp_config(True, tzone, ntp)
                     print("My IP Address:", self.local_ip)
                 return  # yay!

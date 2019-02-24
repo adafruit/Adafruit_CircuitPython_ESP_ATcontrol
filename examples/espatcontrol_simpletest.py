@@ -4,11 +4,11 @@ import busio
 from digitalio import DigitalInOut
 from adafruit_espatcontrol import adafruit_espatcontrol
 
-# Get wifi details and more from a settings.py file
+# Get wifi details and more from a secrets.py file
 try:
-    from settings import settings
+    from secrets import secrets
 except ImportError:
-    print("WiFi settings are kept in settings.py, please add them there!")
+    print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
 # With a Metro or Feather M4
@@ -39,12 +39,8 @@ while True:
         print("Checking connection...")
         while not esp.is_connected:
             print("Initializing ESP module")
-            #print("Scanning for AP's")
-            #for ap in esp.scan_APs():
-            #    print(ap)
-            # settings dictionary must contain 'ssid' and 'password' at a minimum
             print("Connecting...")
-            esp.connect(settings)
+            esp.connect(secrets)
             print("Connected to AT software version ", esp.version)
         print("Pinging 8.8.8.8...", end="")
         print(esp.ping("8.8.8.8"))

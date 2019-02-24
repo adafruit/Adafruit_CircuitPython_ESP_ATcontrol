@@ -6,17 +6,17 @@ from adafruit_espatcontrol import adafruit_espatcontrol
 from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 
 
-# Get wifi details and more from a settings.py file
+# Get wifi details and more from a secrets.py file
 try:
-    from settings import settings
+    from secrets import secrets
 except ImportError:
-    print("WiFi settings are kept in settings.py, please add them there!")
+    print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
 
 # With a Metro or Feather M4
 resetpin = DigitalInOut(board.D5)
-rtspin = DigitalInOut(board.D9)
+rtspin = DigitalInOut(board.D6)
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 
 # With a Particle Argon
@@ -47,7 +47,7 @@ while True:
         # Connect to WiFi if not already
         while not esp.is_connected:
             print("Connecting...")
-            esp.connect(settings)
+            esp.connect(secrets)
         print("Connected to", esp.remote_AP)
         # great, lets get the data
         print("Posting data...", end='')
@@ -55,8 +55,8 @@ while True:
         feed='test'
         payload={'value':data}
         response=requests.post(
-            "https://io.adafruit.com/api/v2/"+settings['aio_username']+"/feeds/"+feed+"/data",
-            json=payload,headers={bytes("X-AIO-KEY","utf-8"):bytes(settings['aio_key'],"utf-8")})
+            "https://io.adafruit.com/api/v2/"+secrets['aio_username']+"/feeds/"+feed+"/data",
+            json=payload,headers={bytes("X-AIO-KEY","utf-8"):bytes(secrets['aio_key'],"utf-8")})
         print(response.json())
         response.close()
         counter = counter + 1
