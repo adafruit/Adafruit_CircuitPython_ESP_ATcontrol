@@ -15,11 +15,13 @@ except ImportError:
 # With a Metro or Feather M4
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
+rtspin = DigitalInOut(board.D6)
 
 # With a Particle Argon
 """
 uart = busio.UART(board.ESP_RX, board.ESP_TX, timeout=0.1)
 resetpin = DigitalInOut(board.ESP_WIFI_EN)
+rtspin = DigitalInOut(board.ESP_CTS)
 esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
 from digitalio import Direction
 esp_boot.direction = Direction.OUTPUT
@@ -29,8 +31,8 @@ esp_boot.value = True
 URL = "http://wifitest.adafruit.com/testwifi/index.html"
 print("ESP AT GET URL", URL)
 
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=9600,
-                                          reset_pin=resetpin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
+                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
 print("Resetting ESP module")
 esp.hard_reset()
 
