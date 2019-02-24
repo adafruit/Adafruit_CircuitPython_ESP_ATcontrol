@@ -11,7 +11,10 @@ import busio
 from digitalio import DigitalInOut
 from adafruit_espatcontrol import adafruit_espatcontrol
 from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
-import ujson
+try:
+    import json as json_module
+except ImportError:
+    import ujson as json_module
 from adafruit_epd.epd import Adafruit_EPD
 from adafruit_epd.il0373 import Adafruit_IL0373
 
@@ -56,7 +59,7 @@ def get_value(response, location):
     """Extract a value from a json object, based on the path in 'location'"""
     try:
         print("Parsing JSON response...", end='')
-        json = ujson.loads(response)
+        json = json_module.loads(response)
         print("parsed OK!")
         for x in location:
             json = json[x]
