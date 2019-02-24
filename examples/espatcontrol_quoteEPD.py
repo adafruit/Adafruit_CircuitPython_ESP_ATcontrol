@@ -21,7 +21,7 @@ from adafruit_epd.il0373 import Adafruit_IL0373
 
 # Get wifi details and more from a secrets.py file
 try:
-    from espatcontrol_secrets import secrets
+    from secrets import secrets
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
@@ -45,6 +45,21 @@ display.rotation = 3
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 resetpin = DigitalInOut(board.D5)
 rtspin = DigitalInOut(board.D6)
+
+
+# With a Particle Argon
+"""
+RX = board.ESP_TX
+TX = board.ESP_RX
+resetpin = DigitalInOut(board.ESP_WIFI_EN)
+rtspin = DigitalInOut(board.ESP_CTS)
+uart = busio.UART(TX, RX, timeout=0.1)
+esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+from digitalio import Direction
+esp_boot.direction = Direction.OUTPUT
+esp_boot.value = True
+"""
+
 
 # Create the connection to the co-processor and reset
 esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=115200,

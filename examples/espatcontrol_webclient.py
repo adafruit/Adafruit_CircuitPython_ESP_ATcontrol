@@ -7,7 +7,7 @@ from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 
 # Get wifi details and more from a secrets.py file
 try:
-    from espatcontrol_secrets import secrets
+    from secrets import secrets
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise

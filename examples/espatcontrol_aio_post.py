@@ -8,7 +8,7 @@ from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
 
 # Get wifi details and more from a secrets.py file
 try:
-    from espatcontorl_secrets import secrets
+    from secrets import secrets
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
@@ -16,7 +16,7 @@ except ImportError:
 
 # With a Metro or Feather M4
 resetpin = DigitalInOut(board.D5)
-rtspin = DigitalInOut(board.D9)
+rtspin = DigitalInOut(board.D6)
 uart = busio.UART(board.TX, board.RX, timeout=0.1)
 
 # With a Particle Argon
