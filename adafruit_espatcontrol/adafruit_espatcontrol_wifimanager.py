@@ -24,9 +24,9 @@
 `adafruit_espatcontrol_wifimanager`
 ================================================================================
 
-WiFi Manager for making ESP32 SPI as WiFi much easier
+WiFi Manager for making ESP32 AT Control as WiFi much easier
 
-* Author(s): Melissa LeBlanc-Williams, ladyada
+* Author(s): Melissa LeBlanc-Williams, ladyada, Jerry Needell
 """
 
 # pylint: disable=no-name-in-module
@@ -37,7 +37,7 @@ class ESPAT_WiFiManager:
     """
     A class to help manage the Wifi connection
     """
-    def __init__(self, esp, secrets, status_pixel, attempts=2):
+    def __init__(self, esp, secrets, status_pixel=None, attempts=2):
         """
         :param ESP_SPIcontrol esp: The ESP object we are using
         :param dict secrets: The WiFi and Adafruit IO secrets dict (See examples)
