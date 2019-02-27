@@ -1,8 +1,8 @@
 import time
-import rtc
 import board
 import busio
 from digitalio import DigitalInOut
+import rtc
 
 # ESP32 SPI
 from adafruit_espatcontrol import adafruit_espatcontrol, adafruit_espatcontrol_wifimanager
