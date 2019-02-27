@@ -82,7 +82,7 @@ esp_boot.value = True
 # Create the connection to the co-processor and reset
 esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=921600,
                                           reset_pin=resetpin,
-                                          rts_pin=rtspin, debug=True)
+                                          rts_pin=rtspin, debug=False)
 esp.hard_reset()
 
 requests.set_interface(esp)

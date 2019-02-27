@@ -131,7 +131,6 @@ def request(method, url, data=None, json=None, headers=None, stream=None):
             sock.write(bytes(data, 'utf-8'))
 
         line = sock.readline()
-        #print(line)
         line = line.split(None, 2)
         status = int(line[1])
         reason = ""
@@ -142,7 +141,6 @@ def request(method, url, data=None, json=None, headers=None, stream=None):
             if not line or line == b"\r\n":
                 break
 
-            #print(line)
             title, content = line.split(b': ', 1)
             if title and content:
                 title = str(title.lower(), 'utf-8')
@@ -157,6 +155,7 @@ def request(method, url, data=None, json=None, headers=None, stream=None):
 
     except OSError:
         sock.close()
+        print("how did we get here")
         raise
 
     resp.status_code = status
