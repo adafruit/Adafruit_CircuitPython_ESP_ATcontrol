@@ -4,6 +4,8 @@ import busio
 from digitalio import DigitalInOut
 from adafruit_espatcontrol import adafruit_espatcontrol
 
+
+
 # Get wifi details and more from a secrets.py file
 try:
     from secrets import secrets
@@ -48,6 +50,7 @@ while True:
             print("Connecting...")
             esp.connect(secrets)
             print("Connected to AT software version ", esp.version)
+            print("IP address ", esp.local_ip)
             first_pass = False
         print("Pinging 8.8.8.8...", end="")
         print(esp.ping("8.8.8.8"))

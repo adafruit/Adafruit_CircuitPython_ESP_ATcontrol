@@ -1,15 +1,16 @@
 import time
+import rtc
 import board
 import busio
 from digitalio import DigitalInOut
 
-# ESP32 AT
+# ESP32 SPI
 from adafruit_espatcontrol import adafruit_espatcontrol, adafruit_espatcontrol_wifimanager
 
 #Use below for Most Boards
 import neopixel
 status_light = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=0.2) # Uncomment for Most Boards
-#Uncomment below for ItsyBitsy M4#
+#Uncomment below for ItsyBitsy M4
 #import adafruit_dotstar as dotstar
 #status_light = dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.2)
 
@@ -20,6 +21,7 @@ try:
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
+
 
 
 # With a Metro or Feather M4
@@ -47,25 +49,40 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
 wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, status_light)
 
 
-counter = 0
 
+print("ESP32 local time")
+
+TIME_API = "http://worldtimeapi.org/api/ip"
+
+
+the_rtc = rtc.RTC()
+
+response = None
 while True:
     try:
-        print("Posting data...", end='')
-        data = counter
-        feed = 'test'
-        payload = {'value':data}
-        response = wifi.post(
-            "https://io.adafruit.com/api/v2/"+secrets['aio_username']+"/feeds/"+feed+"/data",
-            json=payload,
-            headers={bytes("X-AIO-KEY", "utf-8"):bytes(secrets['aio_key'], "utf-8")})
-        print(response.json())
-        response.close()
-        counter = counter + 1
-        print("OK")
-    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
+        print("Fetching json from", TIME_API)
+        response = wifi.get(TIME_API)
+        break
+    except (ValueError, RuntimeError,  adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
-        wifi.reset()
         continue
-    response = None
-    time.sleep(15)
+
+json = response.json()
+current_time = json['datetime']
+the_date, the_time = current_time.split('T')
+year, month, mday = [int(x) for x in the_date.split('-')]
+the_time = the_time.split('.')[0]
+hours, minutes, seconds = [int(x) for x in the_time.split(':')]
+
+# We can also fill in these extra nice things
+year_day = json['day_of_year']
+week_day = json['day_of_week']
+is_dst = json['dst']
+
+now = time.struct_time((year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst))
+print(now)
+the_rtc.datetime = now
+
+while True:
+    print(time.localtime())
+    time.sleep(1)
