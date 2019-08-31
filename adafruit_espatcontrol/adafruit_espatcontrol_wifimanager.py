@@ -31,7 +31,8 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 
 # pylint: disable=no-name-in-module
 
-import adafruit_espatcontrol.adafruit_espatcontrol_requests as requests
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+import adafruit_requests as requests
 
 class ESPAT_WiFiManager:
     """
@@ -50,7 +51,7 @@ class ESPAT_WiFiManager:
         self.debug = False
         self.secrets = secrets
         self.attempts = attempts
-        requests.set_interface(self._esp)
+        requests.set_socket(socket,esp)
         self.statuspix = status_pixel
         self.pixel_status(0)
 
