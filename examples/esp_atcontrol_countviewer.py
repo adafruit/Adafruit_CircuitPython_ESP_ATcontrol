@@ -7,11 +7,13 @@ import gc
 import time
 import board
 import busio
-from digitalio import DigitalInOut
-from adafruit_espatcontrol import adafruit_espatcontrol
-from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
-from adafruit_ht16k33 import segments
 import neopixel
+from digitalio import DigitalInOut
+from digitalio import Direction
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+from adafruit_espatcontrol import adafruit_espatcontrol
+from adafruit_ht16k33 import segments
+import adafruit_requests as requests
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -59,23 +61,20 @@ DATA_LOCATION = ["bpi", "USD", "rate_float"]
 #DATA_LOCATION = [0, "followers_count"]
 
 # on metro_m4
-uart = busio.UART(board.TX, board.RX, timeout=0.1)
-resetpin = DigitalInOut(board.D5)
-rtspin = DigitalInOut(board.D6)
+#uart = busio.UART(board.TX, board.RX, timeout=0.1)
+#resetpin = DigitalInOut(board.D5)
+#rtspin = DigitalInOut(board.D6)
 
 
 # With a Particle Argon
-"""
 RX = board.ESP_TX
 TX = board.ESP_RX
 resetpin = DigitalInOut(board.ESP_WIFI_EN)
 rtspin = DigitalInOut(board.ESP_CTS)
 uart = busio.UART(TX, RX, timeout=0.1)
 esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
-from digitalio import Direction
 esp_boot.direction = Direction.OUTPUT
 esp_boot.value = True
-"""
 
 
 
@@ -85,7 +84,7 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200, run_baudrate=921600,
                                           rts_pin=rtspin, debug=False)
 esp.hard_reset()
 
-requests.set_interface(esp)
+requests.set_socket(socket, esp)
 
 # Create the I2C interface.
 i2c = busio.I2C(board.SCL, board.SDA)

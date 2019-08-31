@@ -2,10 +2,11 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-
-# ESP32 AT
+from digitalio import Direction
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 from adafruit_espatcontrol import adafruit_espatcontrol
-from adafruit_espatcontrol import adafruit_espatcontrol_requests as requests
+import adafruit_requests as requests
+
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -16,22 +17,20 @@ except ImportError:
 
 
 # With a Metro or Feather M4
-uart = busio.UART(board.TX, board.RX, timeout=0.1)
-resetpin = DigitalInOut(board.D5)
-rtspin = DigitalInOut(board.D6)
+#uart = busio.UART(board.TX, board.RX, timeout=0.1)
+#resetpin = DigitalInOut(board.D5)
+#rtspin = DigitalInOut(board.D6)
 
 # With a Particle Argon
-"""
 RX = board.ESP_TX
 TX = board.ESP_RX
 resetpin = DigitalInOut(board.ESP_WIFI_EN)
 rtspin = DigitalInOut(board.ESP_CTS)
 uart = busio.UART(TX, RX, timeout=0.1)
 esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
-from digitalio import Direction
 esp_boot.direction = Direction.OUTPUT
 esp_boot.value = True
-"""
+
 
 
 print("ESP AT commands")
@@ -44,7 +43,7 @@ print("ESP AT GET URL", URL)
 print("Resetting ESP module")
 esp.hard_reset()
 
-requests.set_interface(esp)
+requests.set_socket(socket, esp)
 
 while True:
     try:
