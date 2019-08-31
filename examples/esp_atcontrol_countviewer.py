@@ -8,8 +8,8 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
-import neopixel
 from digitalio import Direction
+import neopixel
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 from adafruit_espatcontrol import adafruit_espatcontrol
 from adafruit_ht16k33 import segments
