@@ -31,6 +31,7 @@ class socket:
         if type != SOCK_STREAM:
             raise RuntimeError("Only SOCK_STREAM type supported")
         self._buffer = b''
+        self.settimeout(0)
 
     def connect(self, address, conntype=None):
         """Connect the socket to the 'address' (which should be dotted quad IP). 'conntype'
@@ -39,7 +40,6 @@ class socket:
         if not _the_interface.socket_connect(conntype, host, port, keepalive=10, retries=3):
             raise RuntimeError("Failed to connect to host", host)
         self._buffer = b''
-        self.settimeout(0)
 
 
     def send(self, data):         # pylint: disable=no-self-use

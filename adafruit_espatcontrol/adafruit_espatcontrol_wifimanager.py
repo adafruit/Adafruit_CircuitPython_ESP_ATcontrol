@@ -51,7 +51,7 @@ class ESPAT_WiFiManager:
         self.debug = False
         self.secrets = secrets
         self.attempts = attempts
-        requests.set_socket(socket,esp)
+        requests.set_socket(socket, esp)
         self.statuspix = status_pixel
         self.pixel_status(0)
 
