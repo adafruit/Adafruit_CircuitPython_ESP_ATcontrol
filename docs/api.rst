@@ -7,8 +7,5 @@
 .. automodule:: adafruit_espatcontrol.adafruit_espatcontrol
    :members:
 
-.. automodule:: adafruit_espatcontrol.adafruit_espatcontrol_requests
-   :members:
-
 .. automodule:: adafruit_espatcontrol.adafruit_espatcontrol_socket
    :members:
