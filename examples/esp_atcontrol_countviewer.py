@@ -7,8 +7,8 @@ import gc
 import time
 import board
 import busio
-import neopixel
 from digitalio import DigitalInOut
+import neopixel
 from digitalio import Direction
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 from adafruit_espatcontrol import adafruit_espatcontrol
