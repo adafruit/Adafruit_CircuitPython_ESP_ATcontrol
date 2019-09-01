@@ -2,17 +2,10 @@ import time
 import board
 import busio
 from digitalio import DigitalInOut
+from digitalio import Direction
 import rtc
 
-# ESP32 SPI
 from adafruit_espatcontrol import adafruit_espatcontrol, adafruit_espatcontrol_wifimanager
-
-#Use below for Most Boards
-import neopixel
-status_light = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=0.2) # Uncomment for Most Boards
-#Uncomment below for ItsyBitsy M4
-#import adafruit_dotstar as dotstar
-#status_light = dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.2)
 
 
 # Get wifi details and more from a secrets.py file
@@ -24,23 +17,17 @@ except ImportError:
 
 
 
-# With a Metro or Feather M4
-uart = busio.UART(board.TX, board.RX, timeout=0.1)
-resetpin = DigitalInOut(board.D5)
-rtspin = DigitalInOut(board.D6)
 
 # With a Particle Argon
-"""
 RX = board.ESP_TX
 TX = board.ESP_RX
 resetpin = DigitalInOut(board.ESP_WIFI_EN)
 rtspin = DigitalInOut(board.ESP_CTS)
 uart = busio.UART(TX, RX, timeout=0.1)
 esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
-from digitalio import Direction
 esp_boot.direction = Direction.OUTPUT
 esp_boot.value = True
-"""
+status_light = None
 
 
 print("ESP AT commands")

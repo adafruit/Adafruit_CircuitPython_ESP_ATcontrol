@@ -31,6 +31,7 @@ class socket:
         if type != SOCK_STREAM:
             raise RuntimeError("Only SOCK_STREAM type supported")
         self._buffer = b''
+        self.settimeout(0)
 
     def connect(self, address, conntype=None):
         """Connect the socket to the 'address' (which should be dotted quad IP). 'conntype'
@@ -40,7 +41,8 @@ class socket:
             raise RuntimeError("Failed to connect to host", host)
         self._buffer = b''
 
-    def write(self, data):         # pylint: disable=no-self-use
+
+    def send(self, data):         # pylint: disable=no-self-use
         """Send some data to the socket"""
         _the_interface.socket_send(data)
 
@@ -53,12 +55,12 @@ class socket:
         firstline, self._buffer = self._buffer.split(b'\r\n', 1)
         return firstline
 
-    def read(self, num=0):
+    def recv(self, num=0):
         """Read up to 'num' bytes from the socket, this may be buffered internally!
         If 'num' isnt specified, return everything in the buffer."""
         if num == 0:
             # read as much as we can
-            ret = self._buffer + _the_interface.socket_receive(timeout=1)
+            ret = self._buffer + _the_interface.socket_receive(timeout=self._timeout)
             self._buffer = b''
         else:
             ret = self._buffer[:num]
@@ -68,6 +70,11 @@ class socket:
     def close(self):
         """Close the socket, after reading whatever remains"""
         # read whatever's left
-        self._buffer = self._buffer + _the_interface.socket_receive(timeout=1)
+        self._buffer = self._buffer + _the_interface.socket_receive(timeout=self._timeout)
         _the_interface.socket_disconnect()
+
+    def settimeout(self, value):
+        """Set the read timeout for sockets, if value is 0 it will block"""
+        self._timeout = value
+
 # pylint: enable=unused-argument, redefined-builtin, invalid-name
