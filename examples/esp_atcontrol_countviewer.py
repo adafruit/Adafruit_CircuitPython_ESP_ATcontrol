@@ -60,11 +60,6 @@ DATA_LOCATION = ["bpi", "USD", "rate_float"]
 #"screen_names=adafruit"
 #DATA_LOCATION = [0, "followers_count"]
 
-# on metro_m4
-#uart = busio.UART(board.TX, board.RX, timeout=0.1)
-#resetpin = DigitalInOut(board.D5)
-#rtspin = DigitalInOut(board.D6)
-
 
 # With a Particle Argon
 RX = board.ESP_TX

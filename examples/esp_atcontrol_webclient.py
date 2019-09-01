@@ -16,11 +16,6 @@ except ImportError:
     raise
 
 
-# With a Metro or Feather M4
-#uart = busio.UART(board.TX, board.RX, timeout=0.1)
-#resetpin = DigitalInOut(board.D5)
-#rtspin = DigitalInOut(board.D6)
-
 # With a Particle Argon
 RX = board.ESP_TX
 TX = board.ESP_RX
