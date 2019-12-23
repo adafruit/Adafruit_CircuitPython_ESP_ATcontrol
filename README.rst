@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/actions/
     :alt: Build Status
 
 Use the ESP AT command sent to communicate with the Interwebs. Its slow, but works to get data into CircuitPython
