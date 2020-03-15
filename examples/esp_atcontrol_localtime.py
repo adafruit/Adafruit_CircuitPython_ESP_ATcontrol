@@ -5,7 +5,10 @@ from digitalio import DigitalInOut
 from digitalio import Direction
 import rtc
 
-from adafruit_espatcontrol import adafruit_espatcontrol, adafruit_espatcontrol_wifimanager
+from adafruit_espatcontrol import (
+    adafruit_espatcontrol,
+    adafruit_espatcontrol_wifimanager,
+)
 
 
 # Get wifi details and more from a secrets.py file
@@ -14,8 +17,6 @@ try:
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
-
-
 
 
 # With a Particle Argon
@@ -31,10 +32,10 @@ status_light = None
 
 
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
-                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+)
 wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, status_light)
-
 
 
 print("ESP32 local time")
@@ -50,23 +51,25 @@ while True:
         print("Fetching json from", TIME_API)
         response = wifi.get(TIME_API)
         break
-    except (ValueError, RuntimeError,  adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         continue
 
 json = response.json()
-current_time = json['datetime']
-the_date, the_time = current_time.split('T')
-year, month, mday = [int(x) for x in the_date.split('-')]
-the_time = the_time.split('.')[0]
-hours, minutes, seconds = [int(x) for x in the_time.split(':')]
+current_time = json["datetime"]
+the_date, the_time = current_time.split("T")
+year, month, mday = [int(x) for x in the_date.split("-")]
+the_time = the_time.split(".")[0]
+hours, minutes, seconds = [int(x) for x in the_time.split(":")]
 
 # We can also fill in these extra nice things
-year_day = json['day_of_year']
-week_day = json['day_of_week']
-is_dst = json['dst']
+year_day = json["day_of_year"]
+week_day = json["day_of_week"]
+is_dst = json["dst"]
 
-now = time.struct_time((year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst))
+now = time.struct_time(
+    (year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst)
+)
 print(now)
 the_rtc.datetime = now
 

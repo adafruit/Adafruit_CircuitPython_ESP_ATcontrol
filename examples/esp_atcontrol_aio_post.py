@@ -5,8 +5,10 @@ from digitalio import DigitalInOut
 from digitalio import Direction
 
 # ESP32 AT
-from adafruit_espatcontrol import adafruit_espatcontrol, adafruit_espatcontrol_wifimanager
-
+from adafruit_espatcontrol import (
+    adafruit_espatcontrol,
+    adafruit_espatcontrol_wifimanager,
+)
 
 
 # Get wifi details and more from a secrets.py file
@@ -29,8 +31,9 @@ esp_boot.value = True
 status_light = None
 
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
-                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+)
 wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, status_light)
 
 
@@ -38,14 +41,19 @@ counter = 0
 
 while True:
     try:
-        print("Posting data...", end='')
+        print("Posting data...", end="")
         data = counter
-        feed = 'test'
-        payload = {'value':data}
+        feed = "test"
+        payload = {"value": data}
         response = wifi.post(
-            "https://io.adafruit.com/api/v2/"+secrets['aio_username']+"/feeds/"+feed+"/data",
+            "https://io.adafruit.com/api/v2/"
+            + secrets["aio_username"]
+            + "/feeds/"
+            + feed
+            + "/data",
             json=payload,
-            headers={"X-AIO-KEY":secrets['aio_key']})
+            headers={"X-AIO-KEY": secrets["aio_key"]},
+        )
         print(response.json())
         response.close()
         counter = counter + 1

@@ -27,10 +27,10 @@ esp_boot.direction = Direction.OUTPUT
 esp_boot.value = True
 
 
-
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
-                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+)
 
 URL = "http://wifitest.adafruit.com/testwifi/index.html"
 print("ESP AT GET URL", URL)
@@ -47,11 +47,11 @@ while True:
             print("Connecting...")
             esp.connect(secrets)
         # great, lets get the data
-        print("Retrieving URL...", end='')
+        print("Retrieving URL...", end="")
         r = requests.get(URL)
         print("Status:", r.status_code)
-        print("Content type:", r.headers['content-type'])
-        print("Content size:", r.headers['content-length'])
+        print("Content type:", r.headers["content-type"])
+        print("Content size:", r.headers["content-length"])
         print("Encoding:", r.encoding)
         print("Text:", r.text)
 
