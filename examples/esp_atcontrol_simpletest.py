@@ -6,7 +6,6 @@ from digitalio import Direction
 from adafruit_espatcontrol import adafruit_espatcontrol
 
 
-
 # Get wifi details and more from a secrets.py file
 try:
     from secrets import secrets
@@ -27,15 +26,16 @@ esp_boot.value = True
 
 
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
-                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+)
 print("Resetting ESP module")
 esp.hard_reset()
 
 first_pass = True
 while True:
     try:
-        if first_pass :
+        if first_pass:
             print("Scanning for AP's")
             for ap in esp.scan_APs():
                 print(ap)
@@ -49,7 +49,7 @@ while True:
         print("Pinging 8.8.8.8...", end="")
         print(esp.ping("8.8.8.8"))
         time.sleep(10)
-    except (ValueError,RuntimeError, adafruit_espatcontrol.OKError) as e:
+    except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)
         print("Resetting ESP module")
         esp.hard_reset()

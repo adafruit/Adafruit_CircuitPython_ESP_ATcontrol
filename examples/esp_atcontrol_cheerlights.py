@@ -5,7 +5,10 @@ from digitalio import DigitalInOut
 from digitalio import Direction
 
 # ESP32 SPI
-from adafruit_espatcontrol import adafruit_espatcontrol, adafruit_espatcontrol_wifimanager
+from adafruit_espatcontrol import (
+    adafruit_espatcontrol,
+    adafruit_espatcontrol_wifimanager,
+)
 
 
 import neopixel
@@ -20,7 +23,6 @@ except ImportError:
     raise
 
 
-
 # With a Particle Argon
 RX = board.ESP_TX
 TX = board.ESP_RX
@@ -33,8 +35,9 @@ esp_boot.value = True
 status_light = None
 
 print("ESP AT commands")
-esp = adafruit_espatcontrol.ESP_ATcontrol(uart, 115200,
-                                          reset_pin=resetpin, rts_pin=rtspin, debug=False)
+esp = adafruit_espatcontrol.ESP_ATcontrol(
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+)
 wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, status_light)
 
 
@@ -70,7 +73,7 @@ while True:
         color = int(value[1:], 16)
         red = color >> 16 & 0xFF
         green = color >> 8 & 0xFF
-        blue = color& 0xFF
+        blue = color & 0xFF
         gamma_corrected = fancy.gamma_adjust(fancy.CRGB(red, green, blue)).pack()
 
         pixels.fill(gamma_corrected)

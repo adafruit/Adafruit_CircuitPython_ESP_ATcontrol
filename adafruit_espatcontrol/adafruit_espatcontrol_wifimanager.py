@@ -34,10 +34,12 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 import adafruit_requests as requests
 
+
 class ESPAT_WiFiManager:
     """
     A class to help manage the Wifi connection
     """
+
     def __init__(self, esp, secrets, status_pixel=None, attempts=2):
         """
         :param ESP_SPIcontrol esp: The ESP object we are using
