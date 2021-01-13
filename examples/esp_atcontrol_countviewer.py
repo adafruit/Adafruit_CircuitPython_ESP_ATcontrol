@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 """
 This example will access an API, grab a number like hackaday skulls, github
 stars, price of bitcoin, twitter followers... if you can find something that
@@ -10,10 +13,10 @@ import busio
 from digitalio import DigitalInOut
 from digitalio import Direction
 import neopixel
-import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
-from adafruit_espatcontrol import adafruit_espatcontrol
 from adafruit_ht16k33 import segments
 import adafruit_requests as requests
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+from adafruit_espatcontrol import adafruit_espatcontrol
 
 # Get wifi details and more from a secrets.py file
 try:

@@ -1,11 +1,14 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 import time
 import board
 import busio
 from digitalio import DigitalInOut
 from digitalio import Direction
+import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 from adafruit_espatcontrol import adafruit_espatcontrol
-import adafruit_requests as requests
 
 
 # Get wifi details and more from a secrets.py file
