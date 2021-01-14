@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
 """A 'socket' compatible interface thru the ESP AT command set"""
 from micropython import const
 

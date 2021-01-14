@@ -1,18 +1,20 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 import time
 import board
 import busio
 from digitalio import DigitalInOut
 from digitalio import Direction
 
+import neopixel
+import adafruit_fancyled.adafruit_fancyled as fancy
+
 # ESP32 SPI
 from adafruit_espatcontrol import (
     adafruit_espatcontrol,
     adafruit_espatcontrol_wifimanager,
 )
-
-
-import neopixel
-import adafruit_fancyled.adafruit_fancyled as fancy
 
 
 # Get wifi details and more from a secrets.py file
