@@ -283,6 +283,7 @@ class ESP_ATcontrol:
                         bundle.append(self._ipdpacket[0:i])
                         gc.collect()
                         i = incoming_bytes = 0
+                        break  # We've received all the data. Don't wait until timeout.
             else:  # no data waiting
                 self.hw_flow(True)  # start the floooow
         totalsize = sum([len(x) for x in bundle])
@@ -408,7 +409,7 @@ class ESP_ATcontrol:
         reply = self.at_response('AT+CIPDOMAIN="%s"' % host.strip('"'), timeout=3)
         for line in reply.split(b"\r\n"):
             if line and line.startswith(b"+CIPDOMAIN:"):
-                return str(line[11:], "utf-8")
+                return str(line[11:], "utf-8").strip('"')
         raise RuntimeError("Couldn't find IP address")
 
     # *************************** AP SETUP ****************************
