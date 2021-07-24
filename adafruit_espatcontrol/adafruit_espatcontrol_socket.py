@@ -49,7 +49,7 @@ class socket:
         host, port = address
         
         # Determine the conntype from port if not specified.
-        if conntype == None:
+        if conntype is None:
             if port == 80:
                 conntype = "TCP"
             elif port == 443:
