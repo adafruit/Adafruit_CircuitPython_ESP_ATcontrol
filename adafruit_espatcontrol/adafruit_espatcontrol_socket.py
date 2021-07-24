@@ -47,6 +47,14 @@ class socket:
         """Connect the socket to the 'address' (which should be dotted quad IP). 'conntype'
         is an extra that may indicate SSL or not, depending on the underlying interface"""
         host, port = address
+
+        # Determine the conntype from port if not specified.
+        if conntype is None:
+            if port == 80:
+                conntype = "TCP"
+            elif port == 443:
+                conntype = "SSL"
+
         if not _the_interface.socket_connect(
             conntype, host, port, keepalive=10, retries=3
         ):
@@ -74,6 +82,10 @@ class socket:
             ret = self._buffer + _the_interface.socket_receive(timeout=self._timeout)
             self._buffer = b""
         else:
+            if self._buffer == b"":
+                self._buffer = self._buffer + _the_interface.socket_receive(
+                    timeout=self._timeout
+                )
             ret = self._buffer[:num]
             self._buffer = self._buffer[num:]
         return ret
