@@ -193,7 +193,7 @@ class ESP_ATcontrol:
             + ","
             + str(keepalive)
         )
-        replies = self.at_response(cmd, timeout=3, retries=retries).split(b"\r\n")
+        replies = self.at_response(cmd, timeout=10, retries=retries).split(b"\r\n")
         for reply in replies:
             if reply == b"CONNECT" and self.status == self.STATUS_SOCKETOPEN:
                 return True
