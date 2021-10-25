@@ -61,6 +61,11 @@ Usage Example
 See examples folder for full demos
 
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/esp-atcontrol/en/latest/>`_.
+
 Contributing
 ============
 
