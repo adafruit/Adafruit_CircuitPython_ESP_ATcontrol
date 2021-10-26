@@ -24,7 +24,14 @@ SOCK_STREAM = const(1)
 AF_INET = const(2)
 
 # pylint: disable=too-many-arguments, unused-argument
-def getaddrinfo(host: str, port: int, family: int = 0, socktype: int = 0, proto:int = 0, flags:int = 0) -> List[Tuple[int, int, int, str, Tuple[str, int]]]:
+def getaddrinfo(
+    host: str,
+    port: int,
+    family: int = 0,
+    socktype: int = 0,
+    proto: int = 0,
+    flags: int = 0,
+) -> List[Tuple[int, int, int, str, Tuple[str, int]]]:
     """Given a hostname and a port name, return a 'socket.getaddrinfo'
     compatible list of tuples. Honestly, we ignore anything but host & port"""
     if not isinstance(port, int):
@@ -41,7 +48,13 @@ class socket:
     """A simplified implementation of the Python 'socket' class, for connecting
     through an interface to a remote device"""
 
-    def __init__(self, family: int = AF_INET, type: int = SOCK_STREAM, proto: int = 0, fileno: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        family: int = AF_INET,
+        type: int = SOCK_STREAM,
+        proto: int = 0,
+        fileno: Optional[int] = None,
+    ) -> None:
         if family != AF_INET:
             raise RuntimeError("Only AF_INET family supported")
         if type != SOCK_STREAM:

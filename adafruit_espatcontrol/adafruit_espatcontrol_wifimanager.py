@@ -21,18 +21,34 @@ try:
     from typing import Dict, Protocol, Any, Optional, Union, Tuple
 
     class Pixel(Protocol):
+        """
+        A class for providing type hints for parameters
+        requiring a pixel device (NeoPixel/DotStar)
+        """
+
         def fill(self, value: Union[int, Tuple[int, int, int]]) -> Any:
+            """
+            Duck types out the fill method for pixel devices
+            """
             ...
+
 
 except ImportError:
     pass
+
 
 class ESPAT_WiFiManager:
     """
     A class to help manage the Wifi connection
     """
 
-    def __init__(self, esp: ESP_ATcontrol, secrets: Dict[str, Union[str, int]], status_pixel: Optional[Pixel] = None, attempts: int = 2):
+    def __init__(
+        self,
+        esp: ESP_ATcontrol,
+        secrets: Dict[str, Union[str, int]],
+        status_pixel: Optional[Pixel] = None,
+        attempts: int = 2,
+    ):
         """
         :param ESP_SPIcontrol esp: The ESP object we are using
         :param dict secrets: The WiFi and Adafruit IO secrets dict (See examples)

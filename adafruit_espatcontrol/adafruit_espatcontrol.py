@@ -34,12 +34,11 @@ Implementation Notes
 
 import gc
 import time
-from digitalio import Direction
+from digitalio import Direction, DigitalInOut
 
 try:
     import busio
     from typing import Optional, Dict, Union, List
-    from digitalio import DigitalInOut
 except ImportError:
     pass
 
@@ -175,7 +174,15 @@ class ESP_ATcontrol:
                 return int(reply[8:])
         raise RuntimeError("Bad response to CIPMUX?")
 
-    def socket_connect(self, conntype: str, remote: str, remote_port: int, *, keepalive: int = 10, retries: int = 1) -> bool:
+    def socket_connect(
+        self,
+        conntype: str,
+        remote: str,
+        remote_port: int,
+        *,
+        keepalive: int = 10,
+        retries: int = 1
+    ) -> bool:
         """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
         can be an IP address or DNS (we'll do the lookup for you. Remote port
         is integer port on other side. We can't set the local port"""
@@ -314,7 +321,9 @@ class ESP_ATcontrol:
 
     # *************************** SNTP SETUP ****************************
 
-    def sntp_config(self, enable: bool, timezone: Optional[int] = None, server: Optional[str] = None) -> None:
+    def sntp_config(
+        self, enable: bool, timezone: Optional[int] = None, server: Optional[str] = None
+    ) -> None:
         """Configure the built in ESP SNTP client with a UTC-offset number (timezone)
         and server as IP or hostname."""
         cmd = "AT+CIPSNTPCFG="
@@ -463,7 +472,9 @@ class ESP_ATcontrol:
                 raise RuntimeError("Didn't get IP address")
             return
 
-    def scan_APs(self, retries: int = 3) -> Union[List[List[bytes]], None]:  # pylint: disable=invalid-name
+    def scan_APs(  # pylint: disable=invalid-name
+        self, retries: int = 3
+    ) -> Union[List[List[bytes]], None]:
         """Ask the module to scan for access points and return a list of lists
         with name, RSSI, MAC addresses, etc"""
         for _ in range(retries):
