@@ -13,12 +13,11 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 
 # pylint: disable=no-name-in-module
 
-from typing import Union
 import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
 try:
-    from .adafruit_espatcontrol import ESP_ATcontrol
+    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
     from typing import Dict, Protocol, Any, Optional, Union, Tuple
 
     class Pixel(Protocol):
