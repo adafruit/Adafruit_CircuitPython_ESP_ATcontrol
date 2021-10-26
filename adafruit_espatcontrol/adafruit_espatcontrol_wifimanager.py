@@ -13,16 +13,27 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 
 # pylint: disable=no-name-in-module
 
+from typing import Union
 import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
+try:
+    from .adafruit_espatcontrol import ESP_ATcontrol
+    from typing import Dict, Protocol, Any, Optional, Union, Tuple
+
+    class Pixel(Protocol):
+        def fill(self, value: Union[int, Tuple[int, int, int]]) -> Any:
+            ...
+
+except ImportError:
+    pass
 
 class ESPAT_WiFiManager:
     """
     A class to help manage the Wifi connection
     """
 
-    def __init__(self, esp, secrets, status_pixel=None, attempts=2):
+    def __init__(self, esp: ESP_ATcontrol, secrets: Dict[str, Union[str, int]], status_pixel: Optional[Pixel] = None, attempts: int = 2):
         """
         :param ESP_SPIcontrol esp: The ESP object we are using
         :param dict secrets: The WiFi and Adafruit IO secrets dict (See examples)
@@ -39,7 +50,7 @@ class ESPAT_WiFiManager:
         self.statuspix = status_pixel
         self.pixel_status(0)
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Perform a hard reset on the ESP
         """
@@ -47,7 +58,7 @@ class ESPAT_WiFiManager:
             print("Resetting ESP")
         self._esp.hard_reset()
 
-    def connect(self):
+    def connect(self) -> None:
         """
         Attempt to connect to WiFi using the current settings
         """
@@ -68,7 +79,7 @@ class ESPAT_WiFiManager:
                     self.reset()
                 continue
 
-    def get(self, url, **kw):
+    def get(self, url: str, **kw: Any) -> requests.Response:
         """
         Pass the Get request to requests and update Status NeoPixel
 
@@ -87,7 +98,7 @@ class ESPAT_WiFiManager:
         self.pixel_status(0)
         return return_val
 
-    def post(self, url, **kw):
+    def post(self, url: str, **kw: Any) -> requests.Response:
         """
         Pass the Post request to requests and update Status NeoPixel
 
@@ -105,7 +116,7 @@ class ESPAT_WiFiManager:
         return_val = requests.post(url, **kw)
         return return_val
 
-    def put(self, url, **kw):
+    def put(self, url: str, **kw: Any) -> requests.Response:
         """
         Pass the put request to requests and update Status NeoPixel
 
@@ -124,7 +135,7 @@ class ESPAT_WiFiManager:
         self.pixel_status(0)
         return return_val
 
-    def patch(self, url, **kw):
+    def patch(self, url: str, **kw: Any) -> requests.Response:
         """
         Pass the patch request to requests and update Status NeoPixel
 
@@ -143,7 +154,7 @@ class ESPAT_WiFiManager:
         self.pixel_status(0)
         return return_val
 
-    def delete(self, url, **kw):
+    def delete(self, url: str, **kw: Any) -> requests.Response:
         """
         Pass the delete request to requests and update Status NeoPixel
 
@@ -162,7 +173,7 @@ class ESPAT_WiFiManager:
         self.pixel_status(0)
         return return_val
 
-    def ping(self, host, ttl=250):
+    def ping(self, host: str, ttl: int = 250) -> Union[int, None]:
         """
         Pass the Ping request to the ESP32, update Status NeoPixel, return response time
 
@@ -178,7 +189,7 @@ class ESPAT_WiFiManager:
         self.pixel_status(0)
         return response_time
 
-    def pixel_status(self, value):
+    def pixel_status(self, value: Union[int, Tuple[int, int, int]]) -> None:
         """
         Change Status NeoPixel if it was defined
 
