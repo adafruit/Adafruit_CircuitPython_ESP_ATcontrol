@@ -26,9 +26,9 @@ try:
         requiring a pixel device (NeoPixel/DotStar)
         """
 
-        def fill(
+        def fill(  # pylint: disable=unused-argument, no-self-use
             self, value: Union[int, Tuple[int, int, int]]
-        ) -> Any:  # pylint: disable=unused-argument, no-self-use
+        ) -> Any:
             """
             Duck types out the fill method for pixel devices
             """
