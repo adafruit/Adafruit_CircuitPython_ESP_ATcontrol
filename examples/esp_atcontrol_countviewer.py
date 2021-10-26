@@ -98,7 +98,7 @@ if NEOPIXELS_ON_CHANGE:
 if PLAY_SOUND_ON_CHANGE:
     import audioio
 
-    wave_file = open("coin.wav", "rb")
+    wave_file = open("coin.wav", "rb")  # pylint: disable=consider-using-with
     wave = audioio.WaveFile(wave_file)
 
 # we'll save the value in question
