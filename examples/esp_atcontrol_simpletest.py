@@ -17,15 +17,24 @@ except ImportError:
     raise
 
 
-# With a Particle Argon
-RX = board.ESP_TX
-TX = board.ESP_RX
-resetpin = DigitalInOut(board.WIFI_RESET)
-rtspin = DigitalInOut(board.ESP_CTS)
-uart = busio.UART(TX, RX, timeout=0.1)
-esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
-esp_boot.direction = Direction.OUTPUT
-esp_boot.value = True
+if board.board_id == challenger_rp2040_wifi:
+    RX = board.ESP_TX
+    TX = board.ESP_RX
+    resetpin = DigitalInOut(board.WIFI_RESET)
+    rtspin = DigitalInOut(board.ESP_CTS)
+    uart = busio.UART(TX, RX, timeout=0.1)
+    esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+    esp_boot.direction = Direction.OUTPUT
+    esp_boot.value = True
+else:
+    RX = board.ESP_TX
+    TX = board.ESP_RX
+    resetpin = DigitalInOut(board.ESP_WIFI_EN)
+    rtspin = DigitalInOut(board.ESP_CTS)
+    uart = busio.UART(TX, RX, timeout=0.1)
+    esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+    esp_boot.direction = Direction.OUTPUT
+    esp_boot.value = True
 
 
 print("ESP AT commands")
