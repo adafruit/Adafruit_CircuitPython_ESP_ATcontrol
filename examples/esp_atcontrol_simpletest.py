@@ -17,7 +17,7 @@ except ImportError:
     raise
 
 
-if board.board_id == challenger_rp2040_wifi:
+if board.board_id == "challenger_rp2040_wifi":
     RX = board.ESP_TX
     TX = board.ESP_RX
     resetpin = DigitalInOut(board.WIFI_RESET)
