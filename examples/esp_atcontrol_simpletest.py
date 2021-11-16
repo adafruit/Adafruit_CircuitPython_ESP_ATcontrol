@@ -16,14 +16,14 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
-# the default else is the Aragon settings. Add different inits for different boards. 
+
 if board.board_id == "challenger_rp2040_wifi":
     RX = board.ESP_TX
     TX = board.ESP_RX
     resetpin = DigitalInOut(board.WIFI_RESET)
-    rtspin = DigitalInOut(board.ESP_CTS)
-    uart = busio.UART(TX, RX, timeout=0.1)
-    esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+#   rtspin = DigitalInOut(board.ESP_CTS)
+    uart = busio.UART(board.ESP_TX, board.ESP_RX, baudrate=11520)
+    esp_boot = DigitalInOut(board.WIFI_MODE)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
 else:
@@ -38,8 +38,9 @@ else:
 
 
 print("ESP AT commands")
+# I had to remove the rtspin from the esp bellow to get the challenger_rp2040_wifi to work.
 esp = adafruit_espatcontrol.ESP_ATcontrol(
-    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+    uart, 115200, reset_pin=resetpin, debug=False
 )
 print("Resetting ESP module")
 esp.hard_reset()
@@ -48,9 +49,10 @@ first_pass = True
 while True:
     try:
         if first_pass:
-            print("Scanning for AP's")
-            for ap in esp.scan_APs():
-                print(ap)
+# I had to comment out scanning for APs as that did not work
+#            print("Scanning for AP's")
+#            for ap in esp.scan_APs():
+#                print(ap)
             print("Checking connection...")
             # secrets dictionary must contain 'ssid' and 'password' at a minimum
             print("Connecting...")
