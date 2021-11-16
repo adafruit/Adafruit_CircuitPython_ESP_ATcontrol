@@ -1,3 +1,4 @@
+
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
@@ -18,11 +19,11 @@ except ImportError:
 
 
 if board.board_id == "challenger_rp2040_wifi":
-    RX = board.ESP_TX
-    TX = board.ESP_RX
+    RX = board.ESP_RX
+    TX = board.ESP_TX
     resetpin = DigitalInOut(board.WIFI_RESET)
-#   rtspin = DigitalInOut(board.ESP_CTS)
-    uart = busio.UART(board.ESP_TX, board.ESP_RX, baudrate=11520)
+    rtspin = False
+    uart = busio.UART(TX, RX, baudrate=11520)
     esp_boot = DigitalInOut(board.WIFI_MODE)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
@@ -40,7 +41,7 @@ else:
 print("ESP AT commands")
 # I had to remove the rtspin from the esp bellow to get the challenger_rp2040_wifi to work.
 esp = adafruit_espatcontrol.ESP_ATcontrol(
-    uart, 115200, reset_pin=resetpin, debug=False
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
 )
 print("Resetting ESP module")
 esp.hard_reset()
