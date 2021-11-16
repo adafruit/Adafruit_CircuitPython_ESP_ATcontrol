@@ -16,7 +16,7 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
-
+# the default else is the Aragon settings. Add different inits for different boards. 
 if board.board_id == "challenger_rp2040_wifi":
     RX = board.ESP_TX
     TX = board.ESP_RX
