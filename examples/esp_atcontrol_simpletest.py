@@ -20,7 +20,7 @@ except ImportError:
 # With a Particle Argon
 RX = board.ESP_TX
 TX = board.ESP_RX
-resetpin = DigitalInOut(board.ESP_WIFI_EN)
+resetpin = DigitalInOut(board.WIFI_RESET)
 rtspin = DigitalInOut(board.ESP_CTS)
 uart = busio.UART(TX, RX, timeout=0.1)
 esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
