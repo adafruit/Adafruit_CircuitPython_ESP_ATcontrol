@@ -25,8 +25,8 @@ except ImportError:
     raise
 
 # Debug Level
-# Change the Debug Flag if you have issues with AT commands    
-debugflag=False
+# Change the Debug Flag if you have issues with AT commands
+debugflag = False
 
 if board.board_id == "challenger_rp2040_wifi":
     RX = board.ESP_RX

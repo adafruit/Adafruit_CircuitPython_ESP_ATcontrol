@@ -1,4 +1,3 @@
-
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
@@ -17,8 +16,8 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 # Debug Level
-# Change the Debug Flag if you have issues with AT commands    
-debugflag=False
+# Change the Debug Flag if you have issues with AT commands
+debugflag = False
 
 if board.board_id == "challenger_rp2040_wifi":
     RX = board.ESP_RX
@@ -52,9 +51,9 @@ first_pass = True
 while True:
     try:
         if first_pass:
-# Some ESP do not return OK on AP Scan. 
-# See https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/issues/48
-# Comment out the next 3 lines if you get a No OK response to AT+CWLAP
+            # Some ESP do not return OK on AP Scan.
+            # See https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/issues/48
+            # Comment out the next 3 lines if you get a No OK response to AT+CWLAP
             print("Scanning for AP's")
             for ap in esp.scan_APs():
                 print(ap)
