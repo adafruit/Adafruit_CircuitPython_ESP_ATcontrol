@@ -16,7 +16,9 @@ try:
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
-
+# Debug Level
+# Change the Debug Flag if you have issues with AT commands    
+debugflag=False
 
 if board.board_id == "challenger_rp2040_wifi":
     RX = board.ESP_RX
@@ -39,9 +41,9 @@ else:
 
 
 print("ESP AT commands")
-# I had to remove the rtspin from the esp bellow to get the challenger_rp2040_wifi to work.
+# For Boards that do not have an rtspin like challenger_rp2040_wifi set rtspin to False.
 esp = adafruit_espatcontrol.ESP_ATcontrol(
-    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=debugflag
 )
 print("Resetting ESP module")
 esp.hard_reset()
@@ -50,10 +52,11 @@ first_pass = True
 while True:
     try:
         if first_pass:
-# I had to comment out scanning for APs as that did not work
-#            print("Scanning for AP's")
-#            for ap in esp.scan_APs():
-#                print(ap)
+# Some ESP do not return OK on AP Scan. See https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/issues/48
+# disable next 3 lines if you get a No OK response to AT+CWLAP
+            print("Scanning for AP's")
+            for ap in esp.scan_APs():
+                print(ap)
             print("Checking connection...")
             # secrets dictionary must contain 'ssid' and 'password' at a minimum
             print("Connecting...")
