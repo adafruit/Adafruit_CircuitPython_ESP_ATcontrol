@@ -52,8 +52,9 @@ first_pass = True
 while True:
     try:
         if first_pass:
-# Some ESP do not return OK on AP Scan. See https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/issues/48
-# disable next 3 lines if you get a No OK response to AT+CWLAP
+# Some ESP do not return OK on AP Scan. 
+# See https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/issues/48
+# Comment out the next 3 lines if you get a No OK response to AT+CWLAP
             print("Scanning for AP's")
             for ap in esp.scan_APs():
                 print(ap)
