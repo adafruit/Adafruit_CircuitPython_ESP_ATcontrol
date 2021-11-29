@@ -150,7 +150,7 @@ def chime_light():
             if pixel_type == "RGB/GRB":
                 pixels.fill((i, i, i))
             elif pixel_type == "RGBW/GRBW":
-                    pixels.fill((i, i, i, i))
+                pixels.fill((i, i, i, i))
             pixels.show()
             time.sleep(1)
         pixels.fill(0)
