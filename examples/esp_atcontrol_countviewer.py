@@ -147,10 +147,9 @@ def chime_light():
                 pass
     if NEOPIXELS_ON_CHANGE:
         for i in range(100, 0, -10):
-            for i in range(0, 100, 10):
-                if pixel_type == "RGB/GRB":
-                    pixels.fill((i, i, i))
-                elif pixel_type == "RGBW/GRBW":
+            if pixel_type == "RGB/GRB":
+                pixels.fill((i, i, i))
+            elif pixel_type == "RGBW/GRBW":
                     pixels.fill((i, i, i, i))
             pixels.show()
             time.sleep(1)
