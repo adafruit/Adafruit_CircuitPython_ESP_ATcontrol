@@ -33,7 +33,7 @@ if board.board_id == "challenger_rp2040_wifi":
     TX = board.ESP_TX
     resetpin = DigitalInOut(board.WIFI_RESET)
     rtspin = False
-    uart = busio.UART(TX, RX, baudrate=11520)
+    uart = busio.UART(TX, RX, baudrate=11520, receiver_buffer_size=2048)
     esp_boot = DigitalInOut(board.WIFI_MODE)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
