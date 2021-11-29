@@ -21,22 +21,38 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
+# Debug Level
+# Change the Debug Flag if you have issues with AT commands
+debugflag = False
 
-# With a Particle Argon
-RX = board.ESP_TX
-TX = board.ESP_RX
-resetpin = DigitalInOut(board.ESP_WIFI_EN)
-rtspin = DigitalInOut(board.ESP_CTS)
-uart = busio.UART(TX, RX, timeout=0.1)
-esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
-esp_boot.direction = Direction.OUTPUT
-esp_boot.value = True
-status_light = None
+# How Long to sleep between polling
+sleep_duration = 5
 
+if board.board_id == "challenger_rp2040_wifi":
+    RX = board.ESP_RX
+    TX = board.ESP_TX
+    resetpin = DigitalInOut(board.WIFI_RESET)
+    rtspin = False
+    uart = busio.UART(TX, RX, baudrate=11520, receiver_buffer_size=2048)
+    esp_boot = DigitalInOut(board.WIFI_MODE)
+    esp_boot.direction = Direction.OUTPUT
+    esp_boot.value = True
+    status_light = None
+
+else:
+    RX = board.ESP_TX
+    TX = board.ESP_RX
+    resetpin = DigitalInOut(board.ESP_WIFI_EN)
+    rtspin = DigitalInOut(board.ESP_CTS)
+    uart = busio.UART(TX, RX, timeout=0.1)
+    esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+    esp_boot.direction = Direction.OUTPUT
+    esp_boot.value = True
+    status_light = None
 
 print("ESP AT commands")
 esp = adafruit_espatcontrol.ESP_ATcontrol(
-    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=False
+    uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=debugflag
 )
 wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, status_light)
 
@@ -78,4 +94,5 @@ the_rtc.datetime = now
 
 while True:
     print(time.localtime())
-    time.sleep(1)
+    print("Sleeping for: {0} Seconds".format(sleep_duration))
+    time.sleep(sleep_duration)

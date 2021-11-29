@@ -27,7 +27,8 @@ except ImportError:
 
 #              CONFIGURATION
 PLAY_SOUND_ON_CHANGE = False
-NEOPIXELS_ON_CHANGE = False
+NEOPIXELS_ON_CHANGE = True
+DISPLAY_ATTACHED = False
 TIME_BETWEEN_QUERY = 60  # in seconds
 
 # Some data sources and JSON locations to try out
@@ -63,17 +64,36 @@ DATA_LOCATION = ["bpi", "USD", "rate_float"]
 # "screen_names=adafruit"
 # DATA_LOCATION = [0, "followers_count"]
 
+# Debug Level
+# Change the Debug Flag if you have issues with AT commands
+debugflag = False
 
-# With a Particle Argon
-RX = board.ESP_TX
-TX = board.ESP_RX
-resetpin = DigitalInOut(board.ESP_WIFI_EN)
-rtspin = DigitalInOut(board.ESP_CTS)
-uart = busio.UART(TX, RX, timeout=0.1)
-esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
-esp_boot.direction = Direction.OUTPUT
-esp_boot.value = True
-
+if board.board_id == "challenger_rp2040_wifi":
+    RX = board.ESP_RX
+    TX = board.ESP_TX
+    resetpin = DigitalInOut(board.WIFI_RESET)
+    rtspin = False
+    uart = busio.UART(TX, RX, baudrate=11520, receiver_buffer_size=2048)
+    esp_boot = DigitalInOut(board.WIFI_MODE)
+    esp_boot.direction = Direction.OUTPUT
+    esp_boot.value = True
+    status_light = None
+    pixel_pin = board.NEOPIXEL
+    num_pixels = 1
+    pixel_type = "RGBW/GRBW"
+else:
+    RX = board.ESP_TX
+    TX = board.ESP_RX
+    resetpin = DigitalInOut(board.ESP_WIFI_EN)
+    rtspin = DigitalInOut(board.ESP_CTS)
+    uart = busio.UART(TX, RX, timeout=0.1)
+    esp_boot = DigitalInOut(board.ESP_BOOT_MODE)
+    esp_boot.direction = Direction.OUTPUT
+    esp_boot.value = True
+    status_light = None
+    pixel_pin = board.A1
+    num_pixels = 16
+    pixel_type = "RGB/GRB"
 
 # Create the connection to the co-processor and reset
 esp = adafruit_espatcontrol.ESP_ATcontrol(
@@ -82,17 +102,20 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(
 esp.hard_reset()
 
 requests.set_socket(socket, esp)
-
-# Create the I2C interface.
-i2c = busio.I2C(board.SCL, board.SDA)
-# Attach a 7 segment display and display -'s so we know its not live yet
-display = segments.Seg7x4(i2c)
-display.print("----")
+# display
+if DISPLAY_ATTACHED:
+    # Create the I2C interface.
+    i2c = busio.I2C(board.SCL, board.SDA)
+    # Attach a 7 segment display and display -'s so we know its not live yet
+    display = segments.Seg7x4(i2c)
+    display.print("----")
 
 # neopixels
 if NEOPIXELS_ON_CHANGE:
-    pixels = neopixel.NeoPixel(board.A1, 16, brightness=0.4, pixel_order=(1, 0, 2, 3))
-    pixels.fill(0)
+    pixels = neopixel.NeoPixel(
+        pixel_pin, num_pixels, brightness=0.4, pixel_order=(1, 0, 2, 3)
+    )
+    pixels.fill(20)
 
 # music!
 if PLAY_SOUND_ON_CHANGE:
@@ -111,7 +134,12 @@ def chime_light():
     """Light up LEDs and play a tune"""
     if NEOPIXELS_ON_CHANGE:
         for i in range(0, 100, 10):
-            pixels.fill((i, i, i))
+            if pixel_type == "RGB/GRB":
+                pixels.fill((i, i, i))
+            elif pixel_type == "RGBW/GRBW":
+                pixels.fill((i, i, i, i))
+            pixels.show()
+            time.sleep(1)
     if PLAY_SOUND_ON_CHANGE:
         with audioio.AudioOut(board.A0) as audio:
             audio.play(wave)
@@ -119,7 +147,12 @@ def chime_light():
                 pass
     if NEOPIXELS_ON_CHANGE:
         for i in range(100, 0, -10):
-            pixels.fill((i, i, i))
+            if pixel_type == "RGB/GRB":
+                pixels.fill((i, i, i))
+            elif pixel_type == "RGBW/GRBW":
+                pixels.fill((i, i, i, i))
+            pixels.show()
+            time.sleep(1)
         pixels.fill(0)
 
 
@@ -148,8 +181,11 @@ while True:
         value = value[x]
     if not value:
         continue
-    print(times, the_time, "value:", value)
-    display.print(int(value))
+    print("Times:{0}. The Time:{1}. Value: {2}".format(times, the_time, value))
+    if DISPLAY_ATTACHED:
+        display.print(int(value))
+    else:
+        print("INT Value:{0}".format(int(value)))
 
     if last_value != value:
         chime_light()  # animate the neopixels
@@ -159,5 +195,6 @@ while True:
     # normally we wouldn't have to do this, but we get bad fragments
     r = value = None
     gc.collect()
-    print(gc.mem_free())  # pylint: disable=no-member
+    print("GC MEM:{0}".format(gc.mem_free()))  # pylint: disable=no-member
+    print("Sleeping for: {0} Seconds".format(TIME_BETWEEN_QUERY))
     time.sleep(TIME_BETWEEN_QUERY)
