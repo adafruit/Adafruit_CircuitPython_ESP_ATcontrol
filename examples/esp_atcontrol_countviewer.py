@@ -199,4 +199,3 @@ while True:
     print("GC MEM:{0}".format(gc.mem_free()))  # pylint: disable=no-member
     print("Sleeping for: {0} Seconds".format(TIME_BETWEEN_QUERY))
     time.sleep(TIME_BETWEEN_QUERY)
-

@@ -1,4 +1,3 @@
-
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
@@ -95,7 +94,11 @@ while True:
         green = color >> 8 & 0xFF
         blue = color & 0xFF
         gamma_corrected = fancy.gamma_adjust(fancy.CRGB(red, green, blue)).pack()
-        print('Setting LED To: G:{0},R:{1},B:{2},Gamma:{3}'.format(green, red, blue, gamma_corrected))
+        print(
+            "Setting LED To: G:{0},R:{1},B:{2},Gamma:{3}".format(
+                green, red, blue, gamma_corrected
+            )
+        )
         pixels.fill(gamma_corrected)
         last_value = value
     response = None

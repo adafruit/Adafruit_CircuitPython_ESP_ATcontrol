@@ -96,4 +96,3 @@ while True:
     print(time.localtime())
     print("Sleeping for: {0} Seconds".format(sleep_duration))
     time.sleep(sleep_duration)
-
