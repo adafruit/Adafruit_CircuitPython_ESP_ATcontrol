@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-esp-atcontrol/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/esp-atcontrol/en/latest/
+    :target: https://docs.circuitpython.org/projects/esp-atcontrol/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -64,7 +64,7 @@ See examples folder for full demos
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/esp-atcontrol/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/esp-atcontrol/en/latest/>`_.
 
 Contributing
 ============
