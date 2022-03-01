@@ -73,7 +73,7 @@ class socket:
                 conntype = "TCP"
             elif port == 443:
                 conntype = "SSL"
-            #to cater for MQTT over TCP
+            # to cater for MQTT over TCP
             elif port == 1883:
                 conntype = "TCP"
 
