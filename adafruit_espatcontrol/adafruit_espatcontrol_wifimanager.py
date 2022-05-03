@@ -19,6 +19,7 @@ import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 try:
     from typing import Dict, Any, Optional, Union, Tuple
     from circuitpython_typing.led import FillBasedLED
+    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 except ImportError:
     pass
 
