@@ -17,8 +17,8 @@ import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
 try:
-    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
     from typing import Dict, Protocol, Any, Optional, Union, Tuple
+    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 
     class Pixel(Protocol):
         """
