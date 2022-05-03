@@ -37,8 +37,8 @@ import time
 from digitalio import Direction, DigitalInOut
 
 try:
-    import busio
     from typing import Optional, Dict, Union, List
+    import busio
 except ImportError:
     pass
 
