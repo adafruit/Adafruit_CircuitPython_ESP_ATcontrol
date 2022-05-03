@@ -6,8 +6,8 @@
 from micropython import const
 
 try:
-    from .adafruit_espatcontrol import ESP_ATcontrol
     from typing import Optional, Tuple, List
+    from .adafruit_espatcontrol import ESP_ATcontrol
 except ImportError:
     pass
 
