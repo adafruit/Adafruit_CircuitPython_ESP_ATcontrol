@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: Unlicense
 
 Adafruit-Blinka
+adafruit-circuitpython-typing
 pyserial
