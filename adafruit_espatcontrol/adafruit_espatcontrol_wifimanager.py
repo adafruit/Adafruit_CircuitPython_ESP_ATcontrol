@@ -18,7 +18,12 @@ import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
 try:
     from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
-    from typing import Dict, Protocol, Any, Optional, Union, Tuple
+    from typing import Dict, Any, Optional, Union, Tuple
+
+    try:
+        from typing import Protocol
+    except ImportError:
+        from typing_extensions import Protocol
 
     class Pixel(Protocol):
         """
