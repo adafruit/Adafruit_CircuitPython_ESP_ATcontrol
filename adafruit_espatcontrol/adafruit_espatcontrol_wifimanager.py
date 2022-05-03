@@ -18,27 +18,7 @@ import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
 try:
     from typing import Dict, Any, Optional, Union, Tuple
-
-    try:
-        from typing import Protocol
-    except ImportError:
-        from typing_extensions import Protocol
-    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
-
-    class Pixel(Protocol):
-        """
-        A class for providing type hints for parameters
-        requiring a pixel device (NeoPixel/DotStar)
-        """
-
-        def fill(  # pylint: disable=unused-argument, no-self-use
-            self, value: Union[int, Tuple[int, int, int]]
-        ) -> Any:
-            """
-            Duck types out the fill method for pixel devices
-            """
-            ...
-
+    from circuitpython_typing.led import FillBasedLED
 except ImportError:
     pass
 
@@ -52,7 +32,7 @@ class ESPAT_WiFiManager:
         self,
         esp: ESP_ATcontrol,
         secrets: Dict[str, Union[str, int]],
-        status_pixel: Optional[Pixel] = None,
+        status_pixel: Optional[FillBasedLED] = None,
         attempts: int = 2,
     ):
         """
