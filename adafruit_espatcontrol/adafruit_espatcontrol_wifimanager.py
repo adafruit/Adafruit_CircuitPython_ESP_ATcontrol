@@ -18,6 +18,7 @@ import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 
 try:
     from typing import Dict, Any, Optional, Union, Tuple
+
     try:
         from typing import Protocol
     except ImportError:
