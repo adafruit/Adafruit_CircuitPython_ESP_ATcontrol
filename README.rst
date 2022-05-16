@@ -14,7 +14,7 @@ Introduction
     :alt: Build Status
 
 This library is no longer supported! The library is being left available for continued usage, however, Adafruit is no longer supporting it.
-=============
+===========================================================================================================================================
 
 Use the ESP AT command sent to communicate with the Interwebs. Its slow, but works to get data into CircuitPython
 
