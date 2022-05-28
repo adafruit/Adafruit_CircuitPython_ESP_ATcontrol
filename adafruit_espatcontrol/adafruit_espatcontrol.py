@@ -188,6 +188,9 @@ class ESP_ATcontrol:
         can be an IP address or DNS (we'll do the lookup for you. Remote port
         is integer port on other side. We can't set the local port"""
         # lets just do one connection at a time for now
+        if conntype == self.TYPE_UDP:
+            # always disconnect for TYPE_UDP
+            self.socket_disconnect()
         while True:
             stat = self.status
             if stat in (self.STATUS_APCONNECTED, self.STATUS_SOCKETCLOSED):
