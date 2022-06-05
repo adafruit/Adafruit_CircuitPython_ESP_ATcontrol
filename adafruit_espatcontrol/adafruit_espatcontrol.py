@@ -105,6 +105,7 @@ class ESP_ATcontrol:
         self._ipdpacket = bytearray(1500)
         self._ifconfig = []
         self._initialized = False
+        self._conntype = None
 
     def begin(self) -> None:
         """Initialize the module by syncing, resetting if necessary, setting up
@@ -187,6 +188,9 @@ class ESP_ATcontrol:
         can be an IP address or DNS (we'll do the lookup for you. Remote port
         is integer port on other side. We can't set the local port"""
         # lets just do one connection at a time for now
+        if conntype == self.TYPE_UDP:
+            # always disconnect for TYPE_UDP
+            self.socket_disconnect()
         while True:
             stat = self.status
             if stat in (self.STATUS_APCONNECTED, self.STATUS_SOCKETCLOSED):
@@ -209,7 +213,12 @@ class ESP_ATcontrol:
         )
         replies = self.at_response(cmd, timeout=10, retries=retries).split(b"\r\n")
         for reply in replies:
-            if reply == b"CONNECT" and self.status == self.STATUS_SOCKETOPEN:
+            if reply == b"CONNECT" and (
+                conntype == self.TYPE_TCP
+                and self.status == self.STATUS_SOCKETOPEN
+                or conntype == self.TYPE_UDP
+            ):
+                self._conntype = conntype
                 return True
         return False
 
@@ -232,6 +241,8 @@ class ESP_ATcontrol:
             raise RuntimeError("Didn't get data prompt for sending")
         self._uart.reset_input_buffer()
         self._uart.write(buffer)
+        if self._conntype == self.TYPE_UDP:
+            return True
         stamp = time.monotonic()
         response = b""
         while (time.monotonic() - stamp) < timeout:
@@ -314,6 +325,7 @@ class ESP_ATcontrol:
 
     def socket_disconnect(self) -> None:
         """Close any open socket, if there is one"""
+        self._conntype = None
         try:
             self.at_response("AT+CIPCLOSE", retries=1)
         except OKError:
