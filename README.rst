@@ -13,6 +13,10 @@ Introduction
     :target: https://github.com/adafruit/Adafruit_CircuitPython_ESP_ATcontrol/actions/
     :alt: Build Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Code Style: Black
+
 This library is no longer supported! The library is being left available for continued usage, however, Adafruit is no longer supporting it.
 ===========================================================================================================================================
 
