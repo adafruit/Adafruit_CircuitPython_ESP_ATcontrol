@@ -658,7 +658,7 @@ class ESP_ATcontrol:
             self._uart.reset_input_buffer()
             self._initialized = False
 
-    def deep_sleep(self, ms: int) -> bool:
+    def deep_sleep(self, duration_ms: int) -> bool:
         """Execute deep-sleep command.
         Passing zero as argument will put the chip into deep-sleep forever
         until the RST-pin is pulled low (method hard_reset()).
@@ -666,7 +666,7 @@ class ESP_ATcontrol:
 
         Note that a similar method in the Arduino-libs expects microseconds.
         """
-        cmd = "AT+GSLP=" + str(ms)
+        cmd = "AT+GSLP=" + str(duration_ms)
         try:
             self.at_response(cmd, retries=1)
             return True
