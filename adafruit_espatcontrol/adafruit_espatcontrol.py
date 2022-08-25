@@ -657,3 +657,18 @@ class ESP_ATcontrol:
             time.sleep(3)  # give it a few seconds to wake up
             self._uart.reset_input_buffer()
             self._initialized = False
+
+    def deep_sleep(self, duration_ms: int) -> bool:
+        """Execute deep-sleep command.
+        Passing zero as argument will put the chip into deep-sleep forever
+        until the RST-pin is pulled low (method hard_reset()).
+        This is the typical use-case for an ESP8266 as coprocessor.
+
+        Note that a similar method in the Arduino-libs expects microseconds.
+        """
+        cmd = "AT+GSLP=" + str(duration_ms)
+        try:
+            self.at_response(cmd, retries=1)
+            return True
+        except OKError:
+            return False
