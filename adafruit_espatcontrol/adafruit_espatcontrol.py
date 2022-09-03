@@ -472,17 +472,16 @@ class ESP_ATcontrol:
         router = self.remote_AP
         if router and router[0] == ssid:
             return  # we're already connected!
-        for _ in range(3):
-            reply = self.at_response(
-                'AT+CWJAP="' + ssid + '","' + password + '"', timeout=timeout, retries=retries
-            )
-            if b"WIFI CONNECTED" not in reply:
-                print("no CONNECTED")
-                raise RuntimeError("Couldn't connect to WiFi")
-            if b"WIFI GOT IP" not in reply:
-                print("no IP")
-                raise RuntimeError("Didn't get IP address")
-            return
+        reply = self.at_response(
+            'AT+CWJAP="' + ssid + '","' + password + '"', timeout=timeout, retries=retries
+        )
+        if b"WIFI CONNECTED" not in reply:
+            print("no CONNECTED")
+            raise RuntimeError("Couldn't connect to WiFi")
+        if b"WIFI GOT IP" not in reply:
+            print("no IP")
+            raise RuntimeError("Didn't get IP address")
+        return
 
     def scan_APs(  # pylint: disable=invalid-name
         self, retries: int = 3
