@@ -462,7 +462,7 @@ class ESP_ATcontrol:
             return reply
         return [None] * 4
 
-    def join_AP(self, ssid: str, password: str) -> None:  # pylint: disable=invalid-name
+    def join_AP(self, ssid: str, password: str, timeout: int = 15, retries: int = 3) -> None:  # pylint: disable=invalid-name
         """Try to join an access point by name and password, will return
         immediately if we're already connected and won't try to reconnect"""
         # First make sure we're in 'station' mode so we can connect to AP's
@@ -474,7 +474,7 @@ class ESP_ATcontrol:
             return  # we're already connected!
         for _ in range(3):
             reply = self.at_response(
-                'AT+CWJAP="' + ssid + '","' + password + '"', timeout=15, retries=3
+                'AT+CWJAP="' + ssid + '","' + password + '"', timeout=timeout, retries=retries
             )
             if b"WIFI CONNECTED" not in reply:
                 print("no CONNECTED")
