@@ -135,34 +135,29 @@ class ESP_ATcontrol:
             except OKError:
                 pass  # retry
 
-    def connect(self, secrets: Dict[str, Union[str, int]]) -> None:
+    def connect(self, secrets: Dict[str, Union[str, int]], timeout: int = 15, retries: int = 3) -> None:
         """Repeatedly try to connect to an access point with the details in
         the passed in 'secrets' dictionary. Be sure 'ssid' and 'password' are
         defined in the secrets dict! If 'timezone' is set, we'll also configure
         SNTP"""
         # Connect to WiFi if not already
-        retries = 3
-        while True:
-            try:
-                if not self._initialized or retries == 0:
-                    self.begin()
-                retries = 3
-                AP = self.remote_AP  # pylint: disable=invalid-name
+        try:
+            if not self._initialized:
+                self.begin()
+            AP = self.remote_AP  # pylint: disable=invalid-name
+            if AP[0] != secrets["ssid"]:
+                self.join_AP(secrets["ssid"], secrets["password"],timeout=timeout, retries=retries)
                 print("Connected to", AP[0])
-                if AP[0] != secrets["ssid"]:
-                    self.join_AP(secrets["ssid"], secrets["password"])
-                    if "timezone" in secrets:
-                        tzone = secrets["timezone"]
-                        ntp = None
-                        if "ntp_server" in secrets:
-                            ntp = secrets["ntp_server"]
-                        self.sntp_config(True, tzone, ntp)
-                    print("My IP Address:", self.local_ip)
-                return  # yay!
-            except (RuntimeError, OKError) as exp:
-                print("Failed to connect, retrying\n", exp)
-                retries -= 1
-                continue
+                if "timezone" in secrets:
+                    tzone = secrets["timezone"]
+                    ntp = None
+                    if "ntp_server" in secrets:
+                        ntp = secrets["ntp_server"]
+                    self.sntp_config(True, tzone, ntp)
+                print("My IP Address:", self.local_ip)
+            return  # yay!
+        except (RuntimeError, OKError) as exp:
+            print("Failed to connect\n", exp)
 
     # *************************** SOCKET SETUP ****************************
 
