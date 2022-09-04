@@ -158,6 +158,7 @@ class ESP_ATcontrol:
             return  # yay!
         except (RuntimeError, OKError) as exp:
             print("Failed to connect\n", exp)
+            raise
 
     # *************************** SOCKET SETUP ****************************
 
