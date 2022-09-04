@@ -41,7 +41,7 @@ class ESPAT_WiFiManager:
         :param dict secrets: The WiFi and Adafruit IO secrets dict (See examples)
         :param status_pixel: (Optional) The pixel device - A NeoPixel or DotStar (default=None)
         :type status_pixel: NeoPixel or DotStar
-        :param int attempts: (Optional) Failed attempts before resetting the ESP32 (default=2)
+        :param int attempts: (Optional) Unused, only for compatibility for old code
         """
         # Read the settings
         self._esp = esp
@@ -60,26 +60,19 @@ class ESPAT_WiFiManager:
             print("Resetting ESP")
         self._esp.hard_reset()
 
-    def connect(self) -> None:
+    def connect(self, timeout: int = 15, retries: int = 3) -> None:
         """
         Attempt to connect to WiFi using the current settings
         """
-        failure_count = 0
-        while not self._esp.is_connected:
-            try:
-                if self.debug:
-                    print("Connecting to AP...")
-                self.pixel_status((100, 0, 0))
-                self._esp.connect(self.secrets)
-                failure_count = 0
-                self.pixel_status((0, 100, 0))
-            except (ValueError, RuntimeError) as error:
-                print("Failed to connect, retrying\n", error)
-                failure_count += 1
-                if failure_count >= self.attempts:
-                    failure_count = 0
-                    self.reset()
-                continue
+        try:
+            if self.debug:
+                print("Connecting to AP...")
+            self.pixel_status((100, 0, 0))
+            self._esp.connect(self.secrets, timeout=timeout, retries=retries)
+            self.pixel_status((0, 100, 0))
+        except (ValueError, RuntimeError) as error:
+            print("Failed to connect\n", error)
+            raise
 
     def get(self, url: str, **kw: Any) -> requests.Response:
         """
