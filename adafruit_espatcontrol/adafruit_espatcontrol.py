@@ -135,7 +135,9 @@ class ESP_ATcontrol:
             except OKError:
                 pass  # retry
 
-    def connect(self, secrets: Dict[str, Union[str, int]], timeout: int = 15, retries: int = 3) -> None:
+    def connect(
+        self, secrets: Dict[str, Union[str, int]], timeout: int = 15, retries: int = 3
+    ) -> None:
         """Repeatedly try to connect to an access point with the details in
         the passed in 'secrets' dictionary. Be sure 'ssid' and 'password' are
         defined in the secrets dict! If 'timezone' is set, we'll also configure
@@ -146,7 +148,12 @@ class ESP_ATcontrol:
                 self.begin()
             AP = self.remote_AP  # pylint: disable=invalid-name
             if AP[0] != secrets["ssid"]:
-                self.join_AP(secrets["ssid"], secrets["password"],timeout=timeout, retries=retries)
+                self.join_AP(
+                    secrets["ssid"],
+                    secrets["password"],
+                    timeout=timeout,
+                    retries=retries,
+                )
                 print("Connected to", secrets["ssid"])
                 if "timezone" in secrets:
                     tzone = secrets["timezone"]
@@ -460,7 +467,9 @@ class ESP_ATcontrol:
             return reply
         return [None] * 4
 
-    def join_AP(self, ssid: str, password: str, timeout: int = 15, retries: int = 3) -> None:  # pylint: disable=invalid-name
+    def join_AP(
+        self, ssid: str, password: str, timeout: int = 15, retries: int = 3
+    ) -> None:  # pylint: disable=invalid-name
         """Try to join an access point by name and password, will return
         immediately if we're already connected and won't try to reconnect"""
         # First make sure we're in 'station' mode so we can connect to AP's
@@ -471,7 +480,9 @@ class ESP_ATcontrol:
         if router and router[0] == ssid:
             return  # we're already connected!
         reply = self.at_response(
-            'AT+CWJAP="' + ssid + '","' + password + '"', timeout=timeout, retries=retries
+            'AT+CWJAP="' + ssid + '","' + password + '"',
+            timeout=timeout,
+            retries=retries,
         )
         if b"WIFI CONNECTED" not in reply:
             print("no CONNECTED")
@@ -575,7 +586,12 @@ class ESP_ATcontrol:
             # special case, ping also does not return an OK
             if "AT+PING" in at_cmd and b"ERROR\r\n" in response:
                 return response
-            if response[-4:] != b"OK\r\n":
+            # special case, does return OK but in fact it is busy
+            if (
+                "AT+CIFSR" in at_cmd
+                and b"busy" in response
+                or response[-4:] != b"OK\r\n"
+            ):
                 time.sleep(1)
                 continue
             return response[:-4]
