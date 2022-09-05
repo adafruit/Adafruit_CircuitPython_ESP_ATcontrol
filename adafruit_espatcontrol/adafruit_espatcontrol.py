@@ -147,7 +147,7 @@ class ESP_ATcontrol:
             AP = self.remote_AP  # pylint: disable=invalid-name
             if AP[0] != secrets["ssid"]:
                 self.join_AP(secrets["ssid"], secrets["password"],timeout=timeout, retries=retries)
-                print("Connected to", AP[0])
+                print("Connected to", secrets["ssid"])
                 if "timezone" in secrets:
                     tzone = secrets["timezone"]
                     ntp = None
@@ -155,6 +155,8 @@ class ESP_ATcontrol:
                         ntp = secrets["ntp_server"]
                     self.sntp_config(True, tzone, ntp)
                 print("My IP Address:", self.local_ip)
+            else:
+                print("Already connected to", AP[0])
             return  # yay!
         except (RuntimeError, OKError) as exp:
             print("Failed to connect\n", exp)
