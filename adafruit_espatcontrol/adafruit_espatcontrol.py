@@ -467,9 +467,9 @@ class ESP_ATcontrol:
             return reply
         return [None] * 4
 
-    def join_AP(
+    def join_AP(  # pylint: disable=invalid-name
         self, ssid: str, password: str, timeout: int = 15, retries: int = 3
-    ) -> None:  # pylint: disable=invalid-name
+    ) -> None:
         """Try to join an access point by name and password, will return
         immediately if we're already connected and won't try to reconnect"""
         # First make sure we're in 'station' mode so we can connect to AP's
