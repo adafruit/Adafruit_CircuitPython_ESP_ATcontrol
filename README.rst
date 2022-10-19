@@ -17,6 +17,10 @@ Using circuitpython 7.3.3 and compiled espressif AT command firmware for the ESP
 code changes to the espressif AT firmware other than to enable WPA enterprise support in menuconfig 
 and recompile/flash the firmware onto the ESP32-C3.  "Your mileage may vary"
 
+I've provided some updated examples in ``fork-examples``
+
+Original README follows: 
+
 Introduction
 ============
 
