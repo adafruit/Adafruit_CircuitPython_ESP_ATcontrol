@@ -1,3 +1,22 @@
+This is a fork of the Adafruit_CircuitPython_ESP_ATcontrol library with changes:
+
+* WPA Enterprise WPA-PEAP support in espatcontrol and wifimanager (must be compiled in your esp AT firmware)
+* Moving from deprecated AT+CIPSTATUS to AT+CWSTATE for wifi status and AT+CIPSTATE for socket status.
+  See https://docs.espressif.com/projects/esp-at/en/latest/esp32c3/AT_Command_Set/TCP-IP_AT_Commands.html#cmd-status
+* Fixes for reconnection issues with adafruit_requests and sockets in the wifimanager
+* Changed handling for soft_reset(). Added soft_reset()
+  as an option in lots of places hard_reset() is being used. 
+  For boards that don't have a hardware reset line
+  (e.g. - a repurposed Adafruit QT Py ESP32-C3 I tested this with https://www.adafruit.com/product/5405)
+* Added function to disconnect wifi
+* Added function to change autoreconnect status 
+* Bug fixes for SSL connection replies not being accounted for in socket_connect()
+
+My test module is an Adafruit Qt Py ESP32-C3 connected via UART to an Adafruit Feather M4 Express
+Using circuitpython 7.3.3 and compiled espressif AT command firmware for the ESP32-C3.  I haven't made any
+code changes to the espressif AT firmware other than to enable WPA enterprise support in menuconfig 
+and recompile/flash the firmware onto the ESP32-C3.  "Your mileage may vary"
+
 Introduction
 ============
 

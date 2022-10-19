@@ -852,7 +852,7 @@ class ESP_ATcontrol:
                 if response[-5:] == b"ready":
                     print(f"soft_reset(): Got ready: {response}")
                 else: 
-                    print(f"Tsoft_reset(): imed out waiting for ready: {response}")
+                    print(f"soft_reset(): imed out waiting for ready: {response}")
             self._uart.reset_input_buffer()
             self.sync()
             return True
