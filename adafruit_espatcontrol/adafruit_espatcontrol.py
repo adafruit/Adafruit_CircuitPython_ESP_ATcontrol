@@ -65,16 +65,16 @@ class ESP_ATcontrol:
     TYPE_UDP = "UDP"
     TYPE_SSL = "SSL"
     TLS_MODE = "SSL"
-    #STATUS_APCONNECTED = 2   # CIPSTATUS method
+    STATUS_APCONNECTED = 2   # CIPSTATUS method
     STATUS_WIFI_APCONNECTED = 2  # CWSTATE method
 
-    #STATUS_SOCKETOPEN = 3 # CIPSTATUS method
+    STATUS_SOCKETOPEN = 3 # CIPSTATUS method
     STATUS_SOCKET_OPEN = 3 # CIPSTATE method
 
-    #STATUS_SOCKETCLOSED = 4 # CIPSTATUS method
+    STATUS_SOCKETCLOSED = 4 # CIPSTATUS method
     STATUS_SOCKET_CLOSED = 4 # CIPSTATE method
 
-    #STATUS_NOTCONNECTED = 5   # CIPSTATUS method 
+    STATUS_NOTCONNECTED = 5   # CIPSTATUS method 
     STATUS_WIFI_NOTCONNECTED = 1  # CWSTATE method
     STATUS_WIFI_DISCONNECTED = 4  # CWSTATE method
 
@@ -88,7 +88,8 @@ class ESP_ATcontrol:
         run_baudrate: Optional[int] = None,
         rts_pin: Optional[DigitalInOut] = None,
         reset_pin: Optional[DigitalInOut] = None,
-        debug: bool = False
+        debug: bool = False,
+        use_cipstatus: bool= False 
     ):
         """This function doesn't try to do any sync'ing, just sets up
         # the hardware, that way nothing can unexpectedly fail!"""
@@ -116,6 +117,8 @@ class ESP_ATcontrol:
         self._initialized = False
         self._conntype = None
 
+        self._use_cipstatus = use_cipstatus
+
     def begin(self) -> None:
         """Initialize the module by syncing, resetting if necessary, setting up
         the desired baudrate, turning on single-socket mode, and configuring
@@ -139,6 +142,15 @@ class ESP_ATcontrol:
                 except OKError:
                     # ESP32 doesnt use CIPSSLSIZE, its ok!
                     self.at_response("AT+CIPSSLCCONF?")
+
+                try:
+                    self.at_response("AT+CWSTATE?", retries=1, timeout=3)
+                except OKError:
+                    # ESP8285's use CIPSTATUS and have no CWSTATE or CWIPSTATUS functions
+                    self._use_cipstatus=True 
+                    if self._debug:
+                        print("No CWSTATE support, using CIPSTATUS, it's ok!")
+
                 self._initialized = True
                 return
             except OKError:
@@ -253,14 +265,23 @@ class ESP_ATcontrol:
             # always disconnect for TYPE_UDP
             self.socket_disconnect()
         while True:
-            stat_wifi = self.status_wifi
-            stat_socket = self.status_socket
-            if stat_wifi == self.STATUS_WIFI_APCONNECTED or stat_socket == self.STATUS_SOCKET_CLOSED:
+            if self._use_cipstatus: 
+                stat = self.status
+                if stat in (self.STATUS_APCONNECTED, self.STATUS_SOCKETCLOSED):
                     break
-            if stat_socket == self.STATUS_SOCKET_OPEN:
-                self.socket_disconnect()
+                if stat == self.STATUS_SOCKETOPEN:
+                    self.socket_disconnect()
+                else:
+                    time.sleep(1)
             else:
-                time.sleep(1)
+                stat_wifi = self.status_wifi
+                stat_socket = self.status_socket
+                if stat_wifi == self.STATUS_WIFI_APCONNECTED or stat_socket == self.STATUS_SOCKET_CLOSED:
+                        break
+                if stat_socket == self.STATUS_SOCKET_OPEN:
+                    self.socket_disconnect()
+                else:
+                    time.sleep(1)
         if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
             raise RuntimeError("Connection type must be TCP, UDL or SSL")
         cmd = (
@@ -279,7 +300,11 @@ class ESP_ATcontrol:
         for reply in replies:
             if reply == b"CONNECT" and (
                 (conntype == self.TYPE_TCP or conntype == self.TYPE_SSL)
-                and self.status_socket == self.STATUS_SOCKET_OPEN
+                and (
+                    (not self._use_cipstatus and self.status_socket == self.STATUS_SOCKET_OPEN)
+                    or 
+                    (self._use_cipstatus and self.status == self.STATUS_SOCKETOPEN)
+                )
                 or conntype == self.TYPE_UDP
             ):
                 self._conntype = conntype
@@ -435,10 +460,21 @@ class ESP_ATcontrol:
         try:
             self.echo(False)
             self.baudrate = self.baudrate
-            if self.status_wifi == self.STATUS_WIFI_APCONNECTED or self.status_socket == self.STATUS_SOCKET_OPEN:
-                if self._debug:
-                    print("is_connected(): status says connected")
-                return True
+            if self._use_cipstatus:
+                stat = self.status
+                if stat in (
+                    self.STATUS_APCONNECTED,
+                    self.STATUS_SOCKETOPEN,
+                    self.STATUS_SOCKETCLOSED,
+                ):
+                    if self._debug:
+                        print("is_connected(): status says connected")
+                    return True
+            else: 
+                if self.status_wifi == self.STATUS_WIFI_APCONNECTED or self.status_socket == self.STATUS_SOCKET_OPEN:
+                    if self._debug:
+                        print("is_connected(): status says connected")
+                    return True
         except (OKError, RuntimeError):
             pass
         if self._debug:
@@ -454,7 +490,8 @@ class ESP_ATcontrol:
         # This muddies things with regards to how the original version of this routine
         # ran the status responses since wifi + socket were mixed, so this has been broken
         # out in to status_wifi() and status_socket() with their own constants for status
-        # This is here for historial reasons but isn't (shouldn't) be in use in the code now. 
+        # This is here for legacy reasons like the the ESP8285 version of the espressif
+        # AT commands which is on the Challenger RP2040 Wifi feather.  
         replies = self.at_response("AT+CIPSTATUS", timeout=5).split(b"\r\n")
         for reply in replies:
             if reply.startswith(b"STATUS:"):
@@ -563,9 +600,14 @@ class ESP_ATcontrol:
     @property
     def remote_AP(self) -> List[Union[int, str, None]]:  # pylint: disable=invalid-name
         """The name of the access point we're connected to, as a string"""
-        stat = self.status_wifi
-        if stat != self.STATUS_WIFI_APCONNECTED:
-            return [None] * 4
+        if self._use_cipstatus:
+            stat = self.status
+            if stat != self.STATUS_APCONNECTED:
+                return [None] * 4
+        else:
+            stat = self.status_wifi
+            if stat != self.STATUS_WIFI_APCONNECTED:
+                return [None] * 4
         replies = self.at_response("AT+CWJAP?", timeout=10).split(b"\r\n")
         for reply in replies:
             if not reply.startswith("+CWJAP:"):
@@ -645,12 +687,26 @@ class ESP_ATcontrol:
         """Disconnect from the AP. Tries whether connected or not."""
         # If we're not connected we likely don't get a "WIFI DISCONNECT" and just get the OK
         # Note it still tries to disconnect even if it says we're not connected.  
-        if self.status_wifi == self.STATUS_WIFI_APCONNECTED:
-            wait_for_disconnect = True
+        if not self._initialized:
+            self.begin()
+        if self._use_cipstatus: 
+            stat = self.status
+            if stat in (
+                self.STATUS_APCONNECTED,
+                self.STATUS_SOCKETOPEN,
+                self.STATUS_SOCKETCLOSED,
+            ):
+                wait_for_disconnect = True 
+            else:
+                if self._debug == True:
+                    print("disconnect(): Not connected, not waiting for disconnect message")
         else:
-            wait_for_disconnect = False 
-            if self._debug == True:
-                print("disconnect(): Not connected, not waiting for disconnect message")
+            if self.status_wifi == self.STATUS_WIFI_APCONNECTED:
+                wait_for_disconnect = True
+            else:
+                wait_for_disconnect = False 
+                if self._debug == True:
+                    print("disconnect(): Not connected, not waiting for disconnect message")
         reply = self.at_response(
             'AT+CWQAP', timeout=timeout, retries=retries
         )
