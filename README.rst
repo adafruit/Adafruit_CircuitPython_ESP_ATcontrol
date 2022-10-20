@@ -3,6 +3,8 @@ This is a fork of the Adafruit_CircuitPython_ESP_ATcontrol library with changes:
 * WPA Enterprise WPA-PEAP support in espatcontrol and wifimanager (must be compiled in your esp AT firmware)
 * Moving from deprecated AT+CIPSTATUS to AT+CWSTATE for wifi status and AT+CIPSTATE for socket status.
   See https://docs.espressif.com/projects/esp-at/en/latest/esp32c3/AT_Command_Set/TCP-IP_AT_Commands.html#cmd-status
+  This will fall back to using CIPSTATUS if CWSTATE isn't available (ie AT command set on the ESP8285
+  that's on the Challenger RP2040 Wifi which can only use up to firmware 2.2)
 * Fixes for reconnection issues with adafruit_requests and sockets in the wifimanager
 * Changed handling for soft_reset(). Added soft_reset()
   as an option in lots of places hard_reset() is being used. 
