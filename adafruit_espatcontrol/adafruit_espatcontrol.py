@@ -698,6 +698,7 @@ class ESP_ATcontrol:
             ):
                 wait_for_disconnect = True 
             else:
+                wait_for_disconnect = False
                 if self._debug == True:
                     print("disconnect(): Not connected, not waiting for disconnect message")
         else:
