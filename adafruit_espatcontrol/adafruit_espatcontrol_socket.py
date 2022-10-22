@@ -67,16 +67,6 @@ class socket:
         is an extra that may indicate SSL or not, depending on the underlying interface"""
         host, port = address
 
-        # Determine the conntype from port if not specified.
-        if conntype is None:
-            if port == 80:
-                conntype = "TCP"
-            elif port == 443:
-                conntype = "SSL"
-            # to cater for MQTT over TCP
-            elif port == 1883:
-                conntype = "TCP"
-
         if not _the_interface.socket_connect(
             conntype, host, port, keepalive=10, retries=3
         ):
