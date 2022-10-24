@@ -62,9 +62,9 @@ class ESPAT_WiFiManager:
         self.pixel_status((100,100,100))
         if self.debug:
             print("Resetting ESP")
-        if hard_reset == True:
+        if hard_reset is True:
             self._esp.hard_reset()
-        if soft_reset == True:
+        if soft_reset is True:
             self._esp.soft_reset()
         self.pixel_status(0)
 
@@ -76,7 +76,7 @@ class ESPAT_WiFiManager:
             if self.debug:
                 print("Connecting to AP...")
             self.pixel_status((100, 0, 0))
-            if self.enterprise == False: 
+            if self.enterprise is False: 
                 self._esp.connect(self.secrets, timeout=timeout, retries=retries)
             else:
                 self._esp.connect_enterprise(self.secrets, timeout=timeout, retries=retries)

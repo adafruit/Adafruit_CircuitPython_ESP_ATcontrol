@@ -212,7 +212,13 @@ class ESP_ATcontrol:
                 if AP[0] != secrets["ssid"]:
                     if self._debug:
                         print("Doing Enterprise connection sequence")
-                    self.join_AP_Enterprise(secrets["ssid"], secrets["username"],secrets["identity"],secrets["password"],secrets["method"])
+                    self.join_AP_Enterprise(secrets["ssid"],
+                                            secrets["username"],
+                                            secrets["identity"],
+                                            secrets["password"],
+                                            secrets["method"],
+                                            timeout=timeout,
+                                            retries=retries,)
                     if "timezone" in secrets:
                         tzone = secrets["timezone"]
                         ntp = None
@@ -230,7 +236,7 @@ class ESP_ATcontrol:
 
     def set_autoconnect(self, autoconnect: bool) -> None:
         """Set the auto connection status if the wifi connects automatically on powerup"""
-        if autoconnect == True:
+        if autoconnect is True:
             auto_flag = "1"
         else:
             auto_flag = "0"
@@ -294,7 +300,7 @@ class ESP_ATcontrol:
             + ","
             + str(keepalive)
         )
-        if self._debug == True:
+        if self._debug is True:
             print("socket_connect(): Going to send command")
         replies = self.at_response(cmd, timeout=10, retries=retries).split(b"\r\n")
         for reply in replies:
@@ -699,23 +705,23 @@ class ESP_ATcontrol:
                 wait_for_disconnect = True 
             else:
                 wait_for_disconnect = False
-                if self._debug == True:
+                if self._debug is True:
                     print("disconnect(): Not connected, not waiting for disconnect message")
         else:
             if self.status_wifi == self.STATUS_WIFI_APCONNECTED:
                 wait_for_disconnect = True
             else:
                 wait_for_disconnect = False 
-                if self._debug == True:
+                if self._debug is True:
                     print("disconnect(): Not connected, not waiting for disconnect message")
         reply = self.at_response(
             'AT+CWQAP', timeout=timeout, retries=retries
         )
         # Don't bother waiting for disconnect message if we weren't connected already
         # sometimes the "WIFI DISCONNECT" shows up in the reply and sometimes it doesn't.
-        if wait_for_disconnect == True:
+        if wait_for_disconnect is True:
             if b'WIFI DISCONNECT' in reply:
-                if self._debug == True: 
+                if self._debug is True: 
                     print(f"disconnect(): Got WIFI DISCONNECT: {reply}")
             else:
                 stamp = time.monotonic()

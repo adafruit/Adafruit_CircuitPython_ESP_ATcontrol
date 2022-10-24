@@ -17,6 +17,12 @@ import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
 from adafruit_espatcontrol import adafruit_espatcontrol
 
+try:
+    from adafruit_ht16k33 import segments
+except ImportError:
+    pass
+
+
 # Get wifi details and more from a secrets.py file
 try:
     from secrets import secrets
