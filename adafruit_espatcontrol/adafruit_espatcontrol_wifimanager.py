@@ -15,11 +15,11 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 
 import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 
 try:
     from typing import Dict, Any, Optional, Union, Tuple
     from circuitpython_typing.led import FillBasedLED
-    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 except ImportError:
     pass
 
