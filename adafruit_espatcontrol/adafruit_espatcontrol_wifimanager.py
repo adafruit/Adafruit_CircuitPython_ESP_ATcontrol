@@ -35,8 +35,8 @@ class ESPAT_WiFiManager:
         secrets: Dict[str, Union[str, int]],
         status_pixel: Optional[FillBasedLED] = None,
         attempts: int = 2,
-        enterprise: bool=False, 
-        debug: bool=False, 
+        enterprise: bool = False,
+        debug: bool = False,
     ):
         """
         :param ESP_SPIcontrol esp: The ESP object we are using
@@ -59,7 +59,7 @@ class ESPAT_WiFiManager:
         """
         Perform a hard reset on the ESP
         """
-        self.pixel_status((100,100,100))
+        self.pixel_status((100, 100, 100))
         if self.debug:
             print("Resetting ESP")
         if hard_reset is True:
@@ -76,10 +76,12 @@ class ESPAT_WiFiManager:
             if self.debug:
                 print("Connecting to AP...")
             self.pixel_status((100, 0, 0))
-            if self.enterprise is False: 
+            if self.enterprise is False:
                 self._esp.connect(self.secrets, timeout=timeout, retries=retries)
             else:
-                self._esp.connect_enterprise(self.secrets, timeout=timeout, retries=retries)
+                self._esp.connect_enterprise(
+                    self.secrets, timeout=timeout, retries=retries
+                )
             self.pixel_status((0, 100, 0))
         except (ValueError, RuntimeError) as error:
             print("Failed to connect\n", error)
@@ -130,7 +132,7 @@ class ESPAT_WiFiManager:
                 print("post(): not connected, trying to connect")
             self.connect()
         self.pixel_status((0, 0, 100))
-        requests.set_socket(socket, self._esp) 
+        requests.set_socket(socket, self._esp)
         return_val = requests.post(url, **kw)
         self.pixel_status(0)
 
@@ -151,7 +153,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
-        requests.set_socket(socket, self._esp) 
+        requests.set_socket(socket, self._esp)
         return_val = requests.put(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -171,7 +173,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
-        requests.set_socket(socket, self._esp) 
+        requests.set_socket(socket, self._esp)
         return_val = requests.patch(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -191,7 +193,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
-        requests.set_socket(socket, self._esp) 
+        requests.set_socket(socket, self._esp)
         return_val = requests.delete(url, **kw)
         self.pixel_status(0)
         return return_val
