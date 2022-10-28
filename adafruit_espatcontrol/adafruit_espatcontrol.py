@@ -243,7 +243,7 @@ class ESP_ATcontrol:
         replies = self.at_response(cmd, timeout=10, retries=retries).split(b"\r\n")
         for reply in replies:
             if reply == b"CONNECT" and (
-                (conntype == self.TYPE_TCP or conntype == self.TYPE_SSL)
+                conntype in (self.TYPE_TCP, self.TYPE_SSL)
                 and self.status == self.STATUS_SOCKETOPEN
                 or conntype == self.TYPE_UDP
             ):
