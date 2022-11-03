@@ -15,11 +15,11 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 
 import adafruit_requests as requests
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 
 try:
     from typing import Dict, Any, Optional, Union, Tuple
     from circuitpython_typing.led import FillBasedLED
-    from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 except ImportError:
     pass
 
@@ -74,6 +74,14 @@ class ESPAT_WiFiManager:
             print("Failed to connect\n", error)
             raise
 
+    def set_conntype(self, url: str) -> None:
+        """set the connection-type according to protocol"""
+        self._esp.conntype = (
+            ESP_ATcontrol.TYPE_SSL
+            if url.startswith("https")
+            else ESP_ATcontrol.TYPE_TCP
+        )
+
     def get(self, url: str, **kw: Any) -> requests.Response:
         """
         Pass the Get request to requests and update Status NeoPixel
@@ -89,6 +97,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
+        self.set_conntype(url)
         return_val = requests.get(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -108,6 +117,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
+        self.set_conntype(url)
         return_val = requests.post(url, **kw)
         return return_val
 
@@ -126,6 +136,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
+        self.set_conntype(url)
         return_val = requests.put(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -145,6 +156,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
+        self.set_conntype(url)
         return_val = requests.patch(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -164,6 +176,7 @@ class ESPAT_WiFiManager:
         if not self._esp.is_connected:
             self.connect()
         self.pixel_status((0, 0, 100))
+        self.set_conntype(url)
         return_val = requests.delete(url, **kw)
         self.pixel_status(0)
         return return_val
