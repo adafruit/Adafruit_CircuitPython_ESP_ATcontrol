@@ -117,6 +117,7 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
+        requests.set_socket(socket, self._esp)
         return_val = requests.get(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -141,6 +142,7 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
+        requests.set_socket(socket, self._esp)
         return_val = requests.post(url, **kw)
         self.pixel_status(0)
 
@@ -162,6 +164,7 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
+        requests.set_socket(socket, self._esp)
         return_val = requests.put(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -182,6 +185,7 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
+        requests.set_socket(socket, self._esp)
         return_val = requests.patch(url, **kw)
         self.pixel_status(0)
         return return_val
@@ -202,6 +206,7 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
+        requests.set_socket(socket, self._esp)
         return_val = requests.delete(url, **kw)
         self.pixel_status(0)
         return return_val
