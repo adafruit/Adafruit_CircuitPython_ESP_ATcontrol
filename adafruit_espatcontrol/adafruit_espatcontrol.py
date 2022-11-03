@@ -254,7 +254,7 @@ class ESP_ATcontrol:
                 return int(reply[8:])
         raise RuntimeError("Bad response to CIPMUX?")
 
-    def socket_connect(
+    def socket_connect(  # pylint: disable=too-many-branches
         self,
         conntype: str,
         remote: str,
@@ -265,7 +265,31 @@ class ESP_ATcontrol:
     ) -> bool:
         """Open a socket. conntype can be TYPE_TCP, TYPE_UDP, or TYPE_SSL. Remote
         can be an IP address or DNS (we'll do the lookup for you. Remote port
-        is integer port on other side. We can't set the local port"""
+        is integer port on other side. We can't set the local port.
+
+        Note that this method is usually called by the requests-package, which
+        does not know anything about conntype. So it is mandatory to set
+        the conntype manually before calling this method if the conntype-parameter
+        is not provided.
+
+        If requests are done using ESPAT_WiFiManager, the conntype is set there
+        depending on the protocol (http/https)."""
+
+        # if caller does not provide conntype, use default conntype from
+        # object if set, otherwise fall back to old buggy logic
+        if not conntype and self._conntype:
+            conntype = self._conntype
+        elif not conntype:
+            # old buggy code from espatcontrol_socket
+            # added here for compatibility with old code
+            if remote_port == 80:
+                conntype = self.TYPE_TCP
+            elif remote_port == 443:
+                conntype = self.TYPE_SSL
+            # to cater for MQTT over TCP
+            elif remote_port == 1883:
+                conntype = self.TYPE_TCP
+
         # lets just do one connection at a time for now
         if conntype == self.TYPE_UDP:
             # always disconnect for TYPE_UDP
@@ -295,7 +319,7 @@ class ESP_ATcontrol:
         replies = self.at_response(cmd, timeout=10, retries=retries).split(b"\r\n")
         for reply in replies:
             if reply == b"CONNECT" and (
-                (conntype == self.TYPE_TCP or conntype == self.TYPE_SSL)
+                conntype in (self.TYPE_TCP, self.TYPE_SSL)
                 and self.status == self.STATUS_SOCKETOPEN
                 or conntype == self.TYPE_UDP
             ):
@@ -625,6 +649,16 @@ class ESP_ATcontrol:
         if not mode in (1, 2, 3):
             raise RuntimeError("Invalid Mode")
         self.at_response("AT+CWMODE=%d" % mode, timeout=3)
+
+    @property
+    def conntype(self) -> Union[str, None]:
+        """The configured connection-type"""
+        return self._conntype
+
+    @conntype.setter
+    def conntype(self, conntype: str) -> None:
+        """set connection-type for subsequent socket_connect()"""
+        self._conntype = conntype
 
     @property
     def local_ip(self) -> Union[str, None]:
