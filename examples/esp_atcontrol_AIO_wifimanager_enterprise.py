@@ -55,7 +55,9 @@ print("ESP AT commands")
 esp = adafruit_espatcontrol.ESP_ATcontrol(
     uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=debugflag
 )
-wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, status_light, enterprise=True, debug=debugflag)
+wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(
+    esp, secrets, status_light, enterprise=True, debug=debugflag
+)
 wifi.disconnect()
 wifi.reset(soft_reset=True)
 
@@ -89,4 +91,3 @@ while True:
         continue
     response = None
     time.sleep(15)
-

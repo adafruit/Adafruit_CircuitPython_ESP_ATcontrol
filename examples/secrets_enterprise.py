@@ -14,4 +14,4 @@ secrets = {
     "github_token": "abcdefghij0123456789",
     "aio_username": "your-aio-username",
     "aio_key": "your-aio-key",
-}   
+}

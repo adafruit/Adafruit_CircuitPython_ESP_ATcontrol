@@ -65,8 +65,10 @@ TIME_BETWEEN_QUERY = 60  # in seconds
 # DATA_LOCATION = ["skulls"]
 
 # Twitter followers
-DATA_SOURCE = "http://cdn.syndication.twimg.com/widgets/followbutton/info.json?" + \
-    "screen_names=adafruit"
+DATA_SOURCE = (
+    "http://cdn.syndication.twimg.com/widgets/followbutton/info.json?"
+    + "screen_names=adafruit"
+)
 DATA_LOCATION = [0, "followers_count"]
 
 # Debug Level
@@ -91,7 +93,9 @@ else:
     TX = board.RX
     resetpin = DigitalInOut(board.D4)
     rtspin = DigitalInOut(board.D5)
-    uart = busio.UART(board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512)
+    uart = busio.UART(
+        board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512
+    )
     esp_boot = DigitalInOut(board.D9)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True

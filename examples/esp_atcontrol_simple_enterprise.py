@@ -40,7 +40,9 @@ else:
     TX = board.RX
     resetpin = DigitalInOut(board.D4)
     rtspin = DigitalInOut(board.D5)
-    uart = busio.UART(board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512)
+    uart = busio.UART(
+        board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512
+    )
     esp_boot = DigitalInOut(board.D9)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
@@ -58,7 +60,7 @@ print("Resetting ESP module")
 esp.hard_reset()
 esp.soft_reset()
 esp.disconnect()
-#time.sleep(20)
+# time.sleep(20)
 esp.set_autoconnect(False)
 
 requests.set_socket(socket, esp)
