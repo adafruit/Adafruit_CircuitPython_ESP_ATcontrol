@@ -67,13 +67,10 @@ class ESP_ATcontrol:
     TLS_MODE = "SSL"
     STATUS_APCONNECTED = 2  # CIPSTATUS method
     STATUS_WIFI_APCONNECTED = 2  # CWSTATE method
-
     STATUS_SOCKETOPEN = 3  # CIPSTATUS method
     STATUS_SOCKET_OPEN = 3  # CIPSTATE method
-
     STATUS_SOCKETCLOSED = 4  # CIPSTATUS method
     STATUS_SOCKET_CLOSED = 4  # CIPSTATE method
-
     STATUS_NOTCONNECTED = 5  # CIPSTATUS method
     STATUS_WIFI_NOTCONNECTED = 1  # CWSTATE method
     STATUS_WIFI_DISCONNECTED = 4  # CWSTATE method
@@ -116,7 +113,6 @@ class ESP_ATcontrol:
         self._ifconfig = []
         self._initialized = False
         self._conntype = None
-
         self._use_cipstatus = use_cipstatus
 
     def begin(self) -> None:
@@ -400,7 +396,6 @@ class ESP_ATcontrol:
                         i = 0  # reset the input buffer now that we know the size
                     elif i > 20:
                         i = 0  # Hmm we somehow didnt get a proper +IPD packet? start over
-
                 else:
                     self.hw_flow(False)  # stop the flow
                     # read as much as we can!
@@ -491,29 +486,11 @@ class ESP_ATcontrol:
             print("is_connected(): status says not connected")
         return False
 
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-return-statements
     @property
     def status(self) -> Union[int, None]:
         """The IP connection status number (see AT+CIPSTATUS datasheet for meaning)"""
-        # Note that CIPSTATUS, at least in the esp32-c3 version of espressif AT firmware
-        # is considered deprecated and you should use AT+CWSTATE for wifi state
-        # and AT+CIPSTATE for socket connection statuses.
-        #
-        # if CWSTATE/CIPSTATE are available, this function uses those and generates
-        # a return code compatible with CIPSTATUS. For more fine grain control
-        # you can use status_wifi and status_socket
-        # if CWSTATE/CIPSTATE are not available, this falls back to using CIPSTATUS
-        # (e.g. - ILabs Challenger RP2040 Wifi which has an onboard ESP8285 with older
-        #  firmware)
-        # CIPSTATUS status messages:
-        #<stat>: status of the ESP32-C3 station interface.
-        # 0: The ESP32-C3 station is not initialized.
-        # 1: The ESP32-C3 station is initialized, but not started a Wi-Fi connection yet.
-        # 2: The ESP32-C3 station is connected to an AP and its IP address is obtained.
-        # 3: The ESP32-C3 station has created a TCP/SSL transmission.
-        # 4: All of the TCP/UDP/SSL connections of the ESP32-C3 station are disconnected.
-        # 5: The ESP32-C3 station started a Wi-Fi connection, but was not connected
-        #    to an AP or disconnected from an AP.
-
         if self._use_cipstatus:
             replies = self.at_response("AT+CIPSTATUS", timeout=5).split(b"\r\n")
             for reply in replies:
@@ -531,12 +508,17 @@ class ESP_ATcontrol:
                 for reply in replies:
                     if reply.startswith(b"STATUS:"):
                         cipstatus = int(reply[7:8])
-                print(f"STATUS: CWSTATE: {status_w}, CIPSTATUS: {cipstatus}, CIPSTATE: {status_s}")
+                print(
+                    f"STATUS: CWSTATE: {status_w}, CIPSTATUS: {cipstatus}, CIPSTATE: {status_s}"
+                )
 
             # Produce a cipstatus-compatible status code
             # Codes are not the same between CWSTATE/CIPSTATUS so in some combinations
             # we just pick what we hope is best.
-            if status_w in (self.STATUS_WIFI_NOTCONNECTED, self.STATUS_WIFI_DISCONNECTED):
+            if status_w in (
+                self.STATUS_WIFI_NOTCONNECTED,
+                self.STATUS_WIFI_DISCONNECTED,
+            ):
                 if self._debug:
                     print(f"STATUS returning {self.STATUS_NOTCONNECTED}")
                 return self.STATUS_NOTCONNECTED
@@ -546,31 +528,26 @@ class ESP_ATcontrol:
                     print(f"STATUS returning {self.STATUS_SOCKETOPEN}")
                 return self.STATUS_SOCKETOPEN
 
-            # Sometimes you get a CIPSTATUS=4 when CWSTATE=2/CIPSTATE=4 and sometimes you
-            # get CIPSTATUS=2 when CWSTATE=2/CIPSTATE=4
-            # if status_w == self.STATUS_WIFI_APCONNECTED and status_s == self.STATUS_SOCKET_CLOSED:
-            #     if self._debug:
-            #         print(f"STATUS returning {self.STATUS_SOCKETCLOSED}")
-            #     return self.STATUS_SOCKETCLOSED
-
             if status_w == self.STATUS_WIFI_APCONNECTED:
                 if self._debug:
                     print(f"STATUS returning {self.STATUS_APCONNECTED}")
                 return self.STATUS_APCONNECTED
 
             # handle extra codes from CWSTATE
-            if status_w == 0: # station has not started any Wi-Fi connection.
+            if status_w == 0:  # station has not started any Wi-Fi connection.
                 if self._debug:
                     print("STATUS returning 1")
                 return 1  # this cipstatus had no previous handler variable
 
             # pylint: disable=line-too-long
-            if status_w == 1: # station has connected to an AP, but does not get an IPv4 address yet.
+            if (
+                status_w == 1
+            ):  # station has connected to an AP, but does not get an IPv4 address yet.
                 if self._debug:
                     print("STATUS returning 1")
-                return 1   # this cipstatus had no previous handler variable
+                return 1  # this cipstatus had no previous handler variable
 
-            if status_w == 3: # station is in Wi-Fi connecting or reconnecting state.
+            if status_w == 3:  # station is in Wi-Fi connecting or reconnecting state.
                 if self._debug:
                     print(f"STATUS returning {self.STATUS_NOTCONNECTED}")
                 return self.STATUS_NOTCONNECTED
@@ -585,16 +562,6 @@ class ESP_ATcontrol:
     @property
     def status_wifi(self) -> Union[int, None]:
         """The WIFI connection status number (see AT+CWSTATE datasheet for meaning)"""
-        # Note that as of 2022-Nov CIPSTATUS is deprecated and replaced with CWSTATE and CIPSTATE
-        # and the CWSTATE <state> codes are different than the old CIPSTATUS codes.
-        # CWSTATE:
-        # <state>: current Wi-Fi state.
-        #     0: ESP32-C3 station has not started any Wi-Fi connection.
-        #     1: ESP32-C3 station has connected to an AP, but does not get an IPv4 address yet.
-        #     2: ESP32-C3 station has connected to an AP, and got an IPv4 address.
-        #     3: ESP32-C3 station is in Wi-Fi connecting or reconnecting state.
-        #     4: ESP32-C3 station is in Wi-Fi disconnected state.
-        # <”ssid”>: the SSID of the target AP.
         replies = self.at_response("AT+CWSTATE?", timeout=5).split(b"\r\n")
         for reply in replies:
             if reply.startswith(b"+CWSTATE:"):
@@ -609,20 +576,6 @@ class ESP_ATcontrol:
     @property
     def status_socket(self) -> Union[int, None]:
         """The Socket connection status number (see AT+CIPSTATE for meaning)"""
-        # +CIPSTATE:<link ID>,<"type">,<"remote IP">,<remote port>,<local port>,<tetype>
-        # OK
-        # When there is no connection, AT returns:
-        # OK
-        # Parameters
-        #     <link ID>: ID of the connection (0~4), used for multiple connections.
-        #     <”type”>: string parameter showing the type of transmission: “TCP”, “TCPv6”,
-        #               “UDP”, “UDPv6”, “SSL”, or “SSLv6”.
-        #     <”remote IP”>: string parameter showing the remote IPv4 address or IPv6 address.
-        #     <remote port>: the remote port number.
-        #     <local port>: the local port number.
-        #     <tetype>:
-        #         0: ESP32-C3 runs as a client.
-        #         1: ESP32-C3 runs as a server.
         replies = self.at_response("AT+CIPSTATE?", timeout=5).split(b"\r\n")
         for reply in replies:
             # If there are any +CIPSTATE lines that means it's an open socket
@@ -740,6 +693,7 @@ class ESP_ATcontrol:
         return
 
     # pylint: disable=invalid-name
+    # pylint: disable=too-many-arguments
     def join_AP_Enterprise(
         self,
         ssid: str,
@@ -755,7 +709,6 @@ class ESP_ATcontrol:
         # Not sure how to verify certificates so we set that to not verify.
         certificate_security = 0  # Bit0: Client certificate.Bit1: Server certificate.
 
-        # First make sure we're in 'station' mode so we can connect to AP's
         if self._debug:
             print("In join_AP_Enterprise()")
         if self.mode != self.MODE_STATION:
@@ -765,9 +718,6 @@ class ESP_ATcontrol:
         if router and router[0] == ssid:
             return  # we're already connected!
         reply = self.at_response(
-            # from https://docs.espressif.com/projects/esp-at/en/latest/
-            #           esp32c3/AT_Command_Set/Wi-Fi_AT_Commands.html#cmd-jeap
-            # AT+CWJEAP=<ssid>,<method>,<identity>,<username>,<password>,<security>[,<jeap_timeout>]
             'AT+CWJEAP="'
             + ssid
             + '",'
@@ -807,9 +757,7 @@ class ESP_ATcontrol:
         else:
             wait_for_disconnect = False
             if self._debug is True:
-                print(
-                    "disconnect(): Not connected, not waiting for disconnect message"
-                )
+                print("disconnect(): Not connected, not waiting for disconnect message")
         reply = self.at_response("AT+CWQAP", timeout=timeout, retries=retries)
         # Don't bother waiting for disconnect message if we weren't connected already
         # sometimes the "WIFI DISCONNECT" shows up in the reply and sometimes it doesn't.
@@ -835,7 +783,6 @@ class ESP_ATcontrol:
                         print(
                             f"disconnect(): Timed out wating for WIFI DISCONNECT: {response}"
                         )
-        return
 
     def scan_APs(  # pylint: disable=invalid-name
         self, retries: int = 3
