@@ -412,15 +412,14 @@ class ESP_ATcontrol:
                         break  # We've received all the data. Don't wait until timeout.
             else:  # no data waiting
                 self.hw_flow(True)  # start the floooow
-        totalsize = sum([len(x) for x in bundle])
+        totalsize = sum(len(x) for x in bundle)
         ret = bytearray(totalsize)
         i = 0
         for x in bundle:
             for char in x:
                 ret[i] = char
                 i += 1
-        for x in bundle:
-            del x
+        del bundle
         gc.collect()
         return ret
 
