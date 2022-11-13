@@ -29,6 +29,7 @@ class ESPAT_WiFiManager:
     A class to help manage the Wifi connection
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         esp: ESP_ATcontrol,
@@ -44,6 +45,8 @@ class ESPAT_WiFiManager:
         :param status_pixel: (Optional) The pixel device - A NeoPixel or DotStar (default=None)
         :type status_pixel: NeoPixel or DotStar
         :param int attempts: (Optional) Unused, only for compatibility for old code
+        :param bool enterprise: (Optional) If True, try to connect to Enterprise AP
+        :param bool debug: (Optional) Print debug messages during operation
         """
         # Read the settings
         self._esp = esp
