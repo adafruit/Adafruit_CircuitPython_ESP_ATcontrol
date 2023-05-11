@@ -23,6 +23,7 @@ def set_interface(iface: ESP_ATcontrol) -> None:
 SOCK_STREAM = const(1)
 AF_INET = const(2)
 
+
 # pylint: disable=too-many-arguments, unused-argument
 def getaddrinfo(
     host: str,
@@ -64,7 +65,8 @@ class socket:
 
     def connect(self, address: Tuple[str, int], conntype: Optional[str] = None) -> None:
         """Connect the socket to the 'address' (which should be dotted quad IP). 'conntype'
-        is an extra that may indicate SSL or not, depending on the underlying interface"""
+        is an extra that may indicate SSL or not, depending on the underlying interface
+        """
         host, port = address
 
         if not _the_interface.socket_connect(
