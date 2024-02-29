@@ -13,8 +13,9 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 
 # pylint: disable=no-name-in-module
 
-import adafruit_requests as requests
-import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+import adafruit_connection_manager
+import adafruit_requests
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 
 try:
@@ -53,10 +54,15 @@ class ESPAT_WiFiManager:
         self.debug = debug
         self.secrets = secrets
         self.attempts = attempts
-        requests.set_socket(socket, esp)
         self.statuspix = status_pixel
         self.pixel_status(0)
         self.enterprise = enterprise
+
+        # create requests session
+        ssl_context = adafruit_connection_manager.create_fake_ssl_context(
+            pool, self._esp
+        )
+        self._requests = adafruit_requests.Session(pool, ssl_context)
 
     def reset(self, hard_reset: bool = True, soft_reset: bool = False) -> None:
         """
@@ -104,7 +110,7 @@ class ESPAT_WiFiManager:
         """
         self._esp.disconnect()
 
-    def get(self, url: str, **kw: Any) -> requests.Response:
+    def get(self, url: str, **kw: Any) -> adafruit_requests.Response:
         """
         Pass the Get request to requests and update Status NeoPixel
 
@@ -120,12 +126,11 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
-        requests.set_socket(socket, self._esp)
-        return_val = requests.get(url, **kw)
+        return_val = self._requests.get(url, **kw)
         self.pixel_status(0)
         return return_val
 
-    def post(self, url: str, **kw: Any) -> requests.Response:
+    def post(self, url: str, **kw: Any) -> adafruit_requests.Response:
         """
         Pass the Post request to requests and update Status NeoPixel
 
@@ -145,13 +150,12 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
-        requests.set_socket(socket, self._esp)
-        return_val = requests.post(url, **kw)
+        return_val = self._requests.post(url, **kw)
         self.pixel_status(0)
 
         return return_val
 
-    def put(self, url: str, **kw: Any) -> requests.Response:
+    def put(self, url: str, **kw: Any) -> adafruit_requests.Response:
         """
         Pass the put request to requests and update Status NeoPixel
 
@@ -167,12 +171,11 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
-        requests.set_socket(socket, self._esp)
-        return_val = requests.put(url, **kw)
+        return_val = self._requests.put(url, **kw)
         self.pixel_status(0)
         return return_val
 
-    def patch(self, url: str, **kw: Any) -> requests.Response:
+    def patch(self, url: str, **kw: Any) -> adafruit_requests.Response:
         """
         Pass the patch request to requests and update Status NeoPixel
 
@@ -188,12 +191,11 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
-        requests.set_socket(socket, self._esp)
-        return_val = requests.patch(url, **kw)
+        return_val = self._requests.patch(url, **kw)
         self.pixel_status(0)
         return return_val
 
-    def delete(self, url: str, **kw: Any) -> requests.Response:
+    def delete(self, url: str, **kw: Any) -> adafruit_requests.Response:
         """
         Pass the delete request to requests and update Status NeoPixel
 
@@ -209,8 +211,7 @@ class ESPAT_WiFiManager:
             self.connect()
         self.pixel_status((0, 0, 100))
         self.set_conntype(url)
-        requests.set_socket(socket, self._esp)
-        return_val = requests.delete(url, **kw)
+        return_val = self._requests.delete(url, **kw)
         self.pixel_status(0)
         return return_val
 

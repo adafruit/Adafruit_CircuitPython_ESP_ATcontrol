@@ -14,8 +14,9 @@ from digitalio import DigitalInOut
 from digitalio import Direction
 import neopixel
 from adafruit_ht16k33 import segments
-import adafruit_requests as requests
-import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+import adafruit_connection_manager
+import adafruit_requests
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 from adafruit_espatcontrol import adafruit_espatcontrol
 
 # Get wifi details and more from a secrets.py file
@@ -101,7 +102,9 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(
 )
 esp.hard_reset()
 
-requests.set_socket(socket, esp)
+ssl_context = adafruit_connection_manager.create_fake_ssl_context(pool, esp)
+requests = adafruit_requests.Session(pool, ssl_context)
+
 # display
 if DISPLAY_ATTACHED:
     # Create the I2C interface.
