@@ -7,10 +7,11 @@
 import time
 import board
 import busio
-import adafruit_requests as requests
+import adafruit_connection_manager
+import adafruit_requests
 from digitalio import DigitalInOut
 from digitalio import Direction
-import adafruit_espatcontrol.adafruit_espatcontrol_socket as socket
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 
 
 # ESP32 AT
@@ -56,7 +57,8 @@ esp = adafruit_espatcontrol.ESP_ATcontrol(
     uart, 115200, reset_pin=resetpin, rts_pin=rtspin, debug=debugflag
 )
 
-requests.set_socket(socket, esp)
+ssl_context = adafruit_connection_manager.create_fake_ssl_context(pool, esp)
+requests = adafruit_requests.Session(pool, ssl_context)
 
 counter = 0
 
