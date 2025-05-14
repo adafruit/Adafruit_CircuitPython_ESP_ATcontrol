@@ -6,15 +6,17 @@ This example will access an API, grab a number like hackaday skulls, github
 stars, price of bitcoin, twitter followers... if you can find something that
 spits out JSON data, we can display it!
 """
+
 import gc
 import time
-import board
-import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
-import neopixel
+
 import adafruit_connection_manager
 import adafruit_requests
+import board
+import busio
+import neopixel
+from digitalio import DigitalInOut, Direction
+
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 from adafruit_espatcontrol import adafruit_espatcontrol
 
@@ -67,8 +69,7 @@ TIME_BETWEEN_QUERY = 60  # in seconds
 
 # Twitter followers
 DATA_SOURCE = (
-    "http://cdn.syndication.twimg.com/widgets/followbutton/info.json?"
-    + "screen_names=adafruit"
+    "http://cdn.syndication.twimg.com/widgets/followbutton/info.json?" + "screen_names=adafruit"
 )
 DATA_LOCATION = [0, "followers_count"]
 
@@ -94,9 +95,7 @@ else:
     TX = board.RX
     resetpin = DigitalInOut(board.D4)
     rtspin = DigitalInOut(board.D5)
-    uart = busio.UART(
-        board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512
-    )
+    uart = busio.UART(board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512)
     esp_boot = DigitalInOut(board.D9)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
@@ -125,16 +124,14 @@ if DISPLAY_ATTACHED:
 
 # neopixels
 if NEOPIXELS_ON_CHANGE:
-    pixels = neopixel.NeoPixel(
-        pixel_pin, num_pixels, brightness=0.4, pixel_order=(1, 0, 2, 3)
-    )
+    pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.4, pixel_order=(1, 0, 2, 3))
     pixels.fill(20)
 
 # music!
 if PLAY_SOUND_ON_CHANGE:
     import audioio
 
-    wave_file = open("coin.wav", "rb")  # pylint: disable=consider-using-with
+    wave_file = open("coin.wav", "rb")
     wave = audioio.WaveFile(wave_file)
 
 # we'll save the value in question
@@ -194,11 +191,11 @@ while True:
         value = value[x]
     if not value:
         continue
-    print("Times:{0}. The Time:{1}. Value: {2}".format(times, the_time, value))
+    print(f"Times:{times}. The Time:{the_time}. Value: {value}")
     if DISPLAY_ATTACHED:
         display.print(int(value))
     else:
-        print("INT Value:{0}".format(int(value)))
+        print(f"INT Value:{int(value)}")
 
     if last_value != value:
         chime_light()  # animate the neopixels
@@ -208,6 +205,6 @@ while True:
     # normally we wouldn't have to do this, but we get bad fragments
     r = value = None
     gc.collect()
-    print("GC MEM:{0}".format(gc.mem_free()))  # pylint: disable=no-member
-    print("Sleeping for: {0} Seconds".format(TIME_BETWEEN_QUERY))
+    print(f"GC MEM:{gc.mem_free()}")
+    print(f"Sleeping for: {TIME_BETWEEN_QUERY} Seconds")
     time.sleep(TIME_BETWEEN_QUERY)

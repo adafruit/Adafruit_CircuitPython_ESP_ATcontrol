@@ -2,15 +2,15 @@
 # SPDX-License-Identifier: MIT
 
 import time
-import board
-import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
+
 import adafruit_connection_manager
 import adafruit_requests
+import board
+import busio
+from digitalio import DigitalInOut, Direction
+
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 from adafruit_espatcontrol import adafruit_espatcontrol
-
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -75,7 +75,7 @@ while True:
         print("Content size:", r.headers["content-length"])
         print("Encoding:", r.encoding)
         print("Text:", r.text)
-        print("Sleeping for: {0} Seconds".format(TIME_BETWEEN_QUERY))
+        print(f"Sleeping for: {TIME_BETWEEN_QUERY} Seconds")
         time.sleep(TIME_BETWEEN_QUERY)
     except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)

@@ -5,18 +5,17 @@
 # Your secrets file must contain your aio_username and aio_key
 
 import time
-import board
-import busio
+
 import adafruit_connection_manager
 import adafruit_requests
-from digitalio import DigitalInOut
-from digitalio import Direction
-import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
+import board
+import busio
+from digitalio import DigitalInOut, Direction
 
+import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 
 # ESP32 AT
 from adafruit_espatcontrol import adafruit_espatcontrol
-
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -44,9 +43,7 @@ else:
     TX = board.RX
     resetpin = DigitalInOut(board.D4)
     rtspin = DigitalInOut(board.D5)
-    uart = busio.UART(
-        board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512
-    )
+    uart = busio.UART(board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512)
     esp_boot = DigitalInOut(board.D9)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
