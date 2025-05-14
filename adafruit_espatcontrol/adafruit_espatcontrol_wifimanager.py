@@ -11,15 +11,15 @@ WiFi Manager for making ESP32 AT Control as WiFi much easier
 * Author(s): Melissa LeBlanc-Williams, ladyada, Jerry Needell
 """
 
-# pylint: disable=no-name-in-module
-
 import adafruit_connection_manager
 import adafruit_requests
+
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 from adafruit_espatcontrol.adafruit_espatcontrol import ESP_ATcontrol
 
 try:
-    from typing import Dict, Any, Optional, Union, Tuple
+    from typing import Any, Dict, Optional, Tuple, Union
+
     from circuitpython_typing.led import FillBasedLED
 except ImportError:
     pass
@@ -30,7 +30,6 @@ class ESPAT_WiFiManager:
     A class to help manage the Wifi connection
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         esp: ESP_ATcontrol,
@@ -59,9 +58,7 @@ class ESPAT_WiFiManager:
         self.enterprise = enterprise
 
         # create requests session
-        ssl_context = adafruit_connection_manager.create_fake_ssl_context(
-            pool, self._esp
-        )
+        ssl_context = adafruit_connection_manager.create_fake_ssl_context(pool, self._esp)
         self._requests = adafruit_requests.Session(pool, ssl_context)
 
     def reset(self, hard_reset: bool = True, soft_reset: bool = False) -> None:
@@ -88,9 +85,7 @@ class ESPAT_WiFiManager:
             if self.enterprise is False:
                 self._esp.connect(self.secrets, timeout=timeout, retries=retries)
             else:
-                self._esp.connect_enterprise(
-                    self.secrets, timeout=timeout, retries=retries
-                )
+                self._esp.connect_enterprise(self.secrets, timeout=timeout, retries=retries)
             self.pixel_status((0, 100, 0))
         except (ValueError, RuntimeError) as error:
             print("Failed to connect\n", error)
@@ -99,9 +94,7 @@ class ESPAT_WiFiManager:
     def set_conntype(self, url: str) -> None:
         """set the connection-type according to protocol"""
         self._esp.conntype = (
-            ESP_ATcontrol.TYPE_SSL
-            if url.startswith("https")
-            else ESP_ATcontrol.TYPE_TCP
+            ESP_ATcontrol.TYPE_SSL if url.startswith("https") else ESP_ATcontrol.TYPE_TCP
         )
 
     def disconnect(self) -> None:

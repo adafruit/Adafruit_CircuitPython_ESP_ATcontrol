@@ -34,10 +34,12 @@ Implementation Notes
 
 import gc
 import time
-from digitalio import Direction, DigitalInOut
+
+from digitalio import DigitalInOut, Direction
 
 try:
-    from typing import Optional, Dict, Union, List
+    from typing import Dict, List, Optional, Union
+
     import busio
 except ImportError:
     pass
@@ -56,7 +58,6 @@ class ESP_ATcontrol:
     AT command firmware, you can use esptool or our CircuitPython miniesptool
     to upload firmware"""
 
-    # pylint: disable=too-many-public-methods, too-many-instance-attributes
     MODE_STATION = 1
     MODE_SOFTAP = 2
     MODE_SOFTAPSTATION = 3
@@ -163,7 +164,7 @@ class ESP_ATcontrol:
         try:
             if not self._initialized:
                 self.begin()
-            AP = self.remote_AP  # pylint: disable=invalid-name
+            AP = self.remote_AP
             if AP[0] != secrets["ssid"]:
                 self.join_AP(
                     secrets["ssid"],
@@ -202,7 +203,7 @@ class ESP_ATcontrol:
                 if not self._initialized or retries == 0:
                     self.begin()
                 retries = 3
-                AP = self.remote_AP  # pylint: disable=invalid-name
+                AP = self.remote_AP
                 if AP[0] is not None:
                     print("Connected to", AP[0])
                 if AP[0] != secrets["ssid"]:
@@ -250,7 +251,7 @@ class ESP_ATcontrol:
                 return int(reply[8:])
         raise RuntimeError("Bad response to CIPMUX?")
 
-    def socket_connect(  # pylint: disable=too-many-branches
+    def socket_connect(
         self,
         conntype: str,
         remote: str,
@@ -292,13 +293,13 @@ class ESP_ATcontrol:
             self.socket_disconnect()
         while True:
             stat = self.status
-            if stat in (self.STATUS_APCONNECTED, self.STATUS_SOCKETCLOSED):
+            if stat in {self.STATUS_APCONNECTED, self.STATUS_SOCKETCLOSED}:
                 break
             if stat == self.STATUS_SOCKETOPEN:
                 self.socket_disconnect()
             else:
                 time.sleep(1)
-        if not conntype in (self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL):
+        if conntype not in {self.TYPE_TCP, self.TYPE_UDP, self.TYPE_SSL}:
             raise RuntimeError("Connection type must be TCP, UDL or SSL")
         cmd = (
             'AT+CIPSTART="'
@@ -315,7 +316,7 @@ class ESP_ATcontrol:
         replies = self.at_response(cmd, timeout=10, retries=retries).split(b"\r\n")
         for reply in replies:
             if reply == b"CONNECT" and (
-                conntype in (self.TYPE_TCP, self.TYPE_SSL)
+                conntype in {self.TYPE_TCP, self.TYPE_SSL}
                 and self.status == self.STATUS_SOCKETOPEN
                 or conntype == self.TYPE_UDP
             ):
@@ -360,7 +361,6 @@ class ESP_ATcontrol:
         return True
 
     def socket_receive(self, timeout: int = 5) -> bytearray:
-        # pylint: disable=too-many-nested-blocks, too-many-branches
         """Check for incoming data over the open socket, returns bytes"""
         incoming_bytes = None
         bundle = []
@@ -381,18 +381,14 @@ class ESP_ATcontrol:
                         continue
                     i += 1
                     # look for the IPD message
-                    if (ipd_start in self._ipdpacket) and chr(
-                        self._ipdpacket[i - 1]
-                    ) == ":":
+                    if (ipd_start in self._ipdpacket) and chr(self._ipdpacket[i - 1]) == ":":
                         try:
                             ipd = str(self._ipdpacket[5 : i - 1], "utf-8")
                             incoming_bytes = int(ipd)
                             if self._debug:
                                 print("Receiving:", incoming_bytes)
                         except ValueError as err:
-                            raise RuntimeError(
-                                "Parsing error during receive", ipd
-                            ) from err
+                            raise RuntimeError("Parsing error during receive", ipd) from err
                         i = 0  # reset the input buffer now that we know the size
                     elif i > 20:
                         i = 0  # Hmm we somehow didnt get a proper +IPD packet? start over
@@ -471,11 +467,11 @@ class ESP_ATcontrol:
             self.echo(False)
             self.baudrate = self.baudrate
             stat = self.status
-            if stat in (
+            if stat in {
                 self.STATUS_APCONNECTED,
                 self.STATUS_SOCKETOPEN,
                 self.STATUS_SOCKETCLOSED,
-            ):
+            }:
                 if self._debug:
                     print("is_connected(): status says connected")
                 return True
@@ -485,8 +481,6 @@ class ESP_ATcontrol:
             print("is_connected(): status says not connected")
         return False
 
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-return-statements
     @property
     def status(self) -> Union[int, None]:
         """The IP connection status number (see AT+CIPSTATUS datasheet for meaning)"""
@@ -507,17 +501,15 @@ class ESP_ATcontrol:
                 for reply in replies:
                     if reply.startswith(b"STATUS:"):
                         cipstatus = int(reply[7:8])
-                print(
-                    f"STATUS: CWSTATE: {status_w}, CIPSTATUS: {cipstatus}, CIPSTATE: {status_s}"
-                )
+                print(f"STATUS: CWSTATE: {status_w}, CIPSTATUS: {cipstatus}, CIPSTATE: {status_s}")
 
             # Produce a cipstatus-compatible status code
             # Codes are not the same between CWSTATE/CIPSTATUS so in some combinations
             # we just pick what we hope is best.
-            if status_w in (
+            if status_w in {
                 self.STATUS_WIFI_NOTCONNECTED,
                 self.STATUS_WIFI_DISCONNECTED,
-            ):
+            }:
                 if self._debug:
                     print(f"STATUS returning {self.STATUS_NOTCONNECTED}")
                 return self.STATUS_NOTCONNECTED
@@ -538,7 +530,6 @@ class ESP_ATcontrol:
                     print("STATUS returning 1")
                 return 1  # this cipstatus had no previous handler variable
 
-            # pylint: disable=line-too-long
             if (
                 status_w == 1
             ):  # station has connected to an AP, but does not get an IPv4 address yet.
@@ -566,9 +557,7 @@ class ESP_ATcontrol:
             if reply.startswith(b"+CWSTATE:"):
                 state_info = reply.split(b",")
                 if self._debug:
-                    print(
-                        f"State reply is {reply}, state_info[1] is {int(state_info[0][9:10])}"
-                    )
+                    print(f"State reply is {reply}, state_info[1] is {int(state_info[0][9:10])}")
                 return int(state_info[0][9:10])
         return None
 
@@ -598,7 +587,7 @@ class ESP_ATcontrol:
         """Station or AP mode selection, can be MODE_STATION, MODE_SOFTAP or MODE_SOFTAPSTATION"""
         if not self._initialized:
             self.begin()
-        if not mode in (1, 2, 3):
+        if mode not in {1, 2, 3}:
             raise RuntimeError("Invalid Mode")
         self.at_response("AT+CWMODE=%d" % mode, timeout=3)
 
@@ -645,7 +634,7 @@ class ESP_ATcontrol:
     # *************************** AP SETUP ****************************
 
     @property
-    def remote_AP(self) -> List[Union[int, str, None]]:  # pylint: disable=invalid-name
+    def remote_AP(self) -> List[Union[int, str, None]]:
         """The name of the access point we're connected to, as a string"""
         stat = self.status
         if stat != self.STATUS_APCONNECTED:
@@ -664,9 +653,7 @@ class ESP_ATcontrol:
             return reply
         return [None] * 4
 
-    def join_AP(  # pylint: disable=invalid-name
-        self, ssid: str, password: str, timeout: int = 15, retries: int = 3
-    ) -> None:
+    def join_AP(self, ssid: str, password: str, timeout: int = 15, retries: int = 3) -> None:
         """Try to join an access point by name and password, will return
         immediately if we're already connected and won't try to reconnect"""
         # First make sure we're in 'station' mode so we can connect to AP's
@@ -691,8 +678,6 @@ class ESP_ATcontrol:
             raise RuntimeError("Didn't get IP address")
         return
 
-    # pylint: disable=invalid-name
-    # pylint: disable=too-many-arguments
     def join_AP_Enterprise(
         self,
         ssid: str,
@@ -747,11 +732,11 @@ class ESP_ATcontrol:
         if not self._initialized:
             self.begin()
         stat = self.status
-        if stat in (
+        if stat in {
             self.STATUS_APCONNECTED,
             self.STATUS_SOCKETOPEN,
             self.STATUS_SOCKETCLOSED,
-        ):
+        }:
             wait_for_disconnect = True
         else:
             wait_for_disconnect = False
@@ -779,13 +764,9 @@ class ESP_ATcontrol:
                     if response[-15:] == b"WIFI DISCONNECT":
                         print(f"disconnect(): Got WIFI DISCONNECT: {response}")
                     else:
-                        print(
-                            f"disconnect(): Timed out wating for WIFI DISCONNECT: {response}"
-                        )
+                        print(f"disconnect(): Timed out wating for WIFI DISCONNECT: {response}")
 
-    def scan_APs(  # pylint: disable=invalid-name
-        self, retries: int = 3
-    ) -> Union[List[List[bytes]], None]:
+    def scan_APs(self, retries: int = 3) -> Union[List[List[bytes]], None]:
         """Ask the module to scan for access points and return a list of lists
         with name, RSSI, MAC addresses, etc"""
         for _ in range(retries):
@@ -838,7 +819,6 @@ class ESP_ATcontrol:
         and then cut out the reply lines to return. We can set
         a variable timeout (how long we'll wait for response) and
         how many times to retry before giving up"""
-        # pylint: disable=too-many-branches
         for _ in range(retries):
             self.hw_flow(True)  # allow any remaning data to stream in
             time.sleep(0.1)  # wait for uart data
@@ -861,9 +841,8 @@ class ESP_ATcontrol:
                     if "AT+CWJAP=" in at_cmd or "AT+CWJEAP=" in at_cmd:
                         if b"WIFI GOT IP\r\n" in response:
                             break
-                    else:
-                        if b"WIFI CONNECTED\r\n" in response:
-                            break
+                    elif b"WIFI CONNECTED\r\n" in response:
+                        break
                     if b"ERR CODE:" in response:
                         break
                 else:
@@ -883,11 +862,7 @@ class ESP_ATcontrol:
             if "AT+PING" in at_cmd and b"ERROR\r\n" in response:
                 return response
             # special case, does return OK but in fact it is busy
-            if (
-                "AT+CIFSR" in at_cmd
-                and b"busy" in response
-                or response[-4:] != b"OK\r\n"
-            ):
+            if "AT+CIFSR" in at_cmd and b"busy" in response or response[-4:] != b"OK\r\n":
                 time.sleep(1)
                 continue
             return response[:-4]

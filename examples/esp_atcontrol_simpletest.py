@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: MIT
 
 import time
+
 import board
 import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
-from adafruit_espatcontrol import adafruit_espatcontrol
+from digitalio import DigitalInOut, Direction
 
+from adafruit_espatcontrol import adafruit_espatcontrol
 
 # Get wifi details and more from a secrets.py file
 try:

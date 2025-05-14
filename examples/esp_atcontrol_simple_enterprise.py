@@ -2,15 +2,15 @@
 # SPDX-License-Identifier: MIT
 
 import time
-import board
-import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
+
 import adafruit_connection_manager
 import adafruit_requests
+import board
+import busio
+from digitalio import DigitalInOut, Direction
+
 import adafruit_espatcontrol.adafruit_espatcontrol_socket as pool
 from adafruit_espatcontrol import adafruit_espatcontrol
-
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -41,9 +41,7 @@ else:
     TX = board.RX
     resetpin = DigitalInOut(board.D4)
     rtspin = DigitalInOut(board.D5)
-    uart = busio.UART(
-        board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512
-    )
+    uart = busio.UART(board.TX, board.RX, baudrate=11520, timeout=0.1, receiver_buffer_size=512)
     esp_boot = DigitalInOut(board.D9)
     esp_boot.direction = Direction.OUTPUT
     esp_boot.value = True
@@ -84,7 +82,7 @@ while True:
         print("Disconnecting from WiFi")
         esp.disconnect()
         esp.disconnect()
-        print("Sleeping for: {0} Seconds".format(TIME_BETWEEN_QUERY))
+        print(f"Sleeping for: {TIME_BETWEEN_QUERY} Seconds")
         time.sleep(TIME_BETWEEN_QUERY)
     except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)

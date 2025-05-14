@@ -2,20 +2,18 @@
 # SPDX-License-Identifier: MIT
 
 import time
+
+import adafruit_fancyled.adafruit_fancyled as fancy
 import board
 import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
-
 import neopixel
-import adafruit_fancyled.adafruit_fancyled as fancy
+from digitalio import DigitalInOut, Direction
 
 # ESP32 SPI
 from adafruit_espatcontrol import (
     adafruit_espatcontrol,
     adafruit_espatcontrol_wifimanager,
 )
-
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -94,11 +92,7 @@ while True:
         green = color >> 8 & 0xFF
         blue = color & 0xFF
         gamma_corrected = fancy.gamma_adjust(fancy.CRGB(red, green, blue)).pack()
-        print(
-            "Setting LED To: G:{0},R:{1},B:{2},Gamma:{3}".format(
-                green, red, blue, gamma_corrected
-            )
-        )
+        print(f"Setting LED To: G:{green},R:{red},B:{blue},Gamma:{gamma_corrected}")
         pixels.fill(gamma_corrected)
         last_value = value
     response = None

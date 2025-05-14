@@ -5,17 +5,16 @@
 # Your secrets file must contain your aio_username and aio_key
 
 import time
+
 import board
 import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
+from digitalio import DigitalInOut, Direction
 
 # ESP32 AT
 from adafruit_espatcontrol import (
     adafruit_espatcontrol,
     adafruit_espatcontrol_wifimanager,
 )
-
 
 # Get wifi details and more from a secrets.py file
 try:

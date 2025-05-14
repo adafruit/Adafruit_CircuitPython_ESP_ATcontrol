@@ -2,17 +2,16 @@
 # SPDX-License-Identifier: MIT
 
 import time
+
 import board
 import busio
-from digitalio import DigitalInOut
-from digitalio import Direction
 import rtc
+from digitalio import DigitalInOut, Direction
 
 from adafruit_espatcontrol import (
     adafruit_espatcontrol,
     adafruit_espatcontrol_wifimanager,
 )
-
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -77,22 +76,20 @@ while True:
 json = response.json()
 current_time = json["datetime"]
 the_date, the_time = current_time.split("T")
-year, month, mday = [int(x) for x in the_date.split("-")]
+year, month, mday = (int(x) for x in the_date.split("-"))
 the_time = the_time.split(".")[0]
-hours, minutes, seconds = [int(x) for x in the_time.split(":")]
+hours, minutes, seconds = (int(x) for x in the_time.split(":"))
 
 # We can also fill in these extra nice things
 year_day = json["day_of_year"]
 week_day = json["day_of_week"]
 is_dst = json["dst"]
 
-now = time.struct_time(
-    (year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst)
-)
+now = time.struct_time((year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst))
 print(now)
 the_rtc.datetime = now
 
 while True:
     print(time.localtime())
-    print("Sleeping for: {0} Seconds".format(sleep_duration))
+    print(f"Sleeping for: {sleep_duration} Seconds")
     time.sleep(sleep_duration)
