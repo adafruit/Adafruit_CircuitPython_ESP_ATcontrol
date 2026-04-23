@@ -78,7 +78,7 @@ class socket:
         """Attempt to return as many bytes as we can up to but not including '\r\n'"""
         if b"\r\n" not in self._buffer:
             # there's no line already in there, read some more
-            self._buffer = self._buffer + _the_interface.socket_receive(timeout=3)
+            self._buffer += _the_interface.socket_receive(timeout=3)
             # print(self._buffer)
         firstline, self._buffer = self._buffer.split(b"\r\n", 1)
         return firstline
@@ -92,7 +92,7 @@ class socket:
             self._buffer = b""
         else:
             if self._buffer == b"":
-                self._buffer = self._buffer + _the_interface.socket_receive(timeout=self._timeout)
+                self._buffer += _the_interface.socket_receive(timeout=self._timeout)
             ret = self._buffer[:num]
             self._buffer = self._buffer[num:]
         return ret
@@ -100,7 +100,7 @@ class socket:
     def close(self) -> None:
         """Close the socket, after reading whatever remains"""
         # read whatever's left
-        self._buffer = self._buffer + _the_interface.socket_receive(timeout=self._timeout)
+        self._buffer += _the_interface.socket_receive(timeout=self._timeout)
         _the_interface.socket_disconnect()
 
     def settimeout(self, value: int) -> None:

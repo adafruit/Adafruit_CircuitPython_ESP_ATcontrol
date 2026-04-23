@@ -327,7 +327,7 @@ class ESP_ATcontrol:
 
     def socket_send(self, buffer: bytes, timeout: int = 1) -> bool:
         """Send data over the already-opened socket, buffer must be bytes"""
-        cmd = "AT+CIPSEND=%d" % len(buffer)
+        cmd = f"AT+CIPSEND={len(buffer):d}"
         self.at_response(cmd, timeout=5, retries=1)
         prompt = b""
         stamp = time.monotonic()
@@ -440,9 +440,9 @@ class ESP_ATcontrol:
         else:
             cmd += "0"
         if timezone is not None:
-            cmd += ",%d" % timezone
+            cmd += f",{timezone:d}"
         if server is not None:
-            cmd += ',"%s"' % server
+            cmd += f',"{server:s}"'
         self.at_response(cmd, timeout=3)
 
     @property
@@ -589,7 +589,7 @@ class ESP_ATcontrol:
             self.begin()
         if mode not in {1, 2, 3}:
             raise RuntimeError("Invalid Mode")
-        self.at_response("AT+CWMODE=%d" % mode, timeout=3)
+        self.at_response(f"AT+CWMODE={mode:d}", timeout=3)
 
     @property
     def conntype(self) -> Union[str, None]:
@@ -612,7 +612,7 @@ class ESP_ATcontrol:
 
     def ping(self, host: str) -> Union[int, None]:
         """Ping the IP or hostname given, returns ms time or None on failure"""
-        reply = self.at_response('AT+PING="%s"' % host.strip('"'), timeout=5)
+        reply = self.at_response(f'AT+PING="{host.strip(chr(34))}"', timeout=5)
         for line in reply.split(b"\r\n"):
             if line and line.startswith(b"+"):
                 try:
@@ -625,7 +625,7 @@ class ESP_ATcontrol:
 
     def nslookup(self, host: str) -> Union[str, None]:
         """Return a dotted-quad IP address strings that matches the hostname"""
-        reply = self.at_response('AT+CIPDOMAIN="%s"' % host.strip('"'), timeout=3)
+        reply = self.at_response(f'AT+CIPDOMAIN="{host.strip(chr(34))}"', timeout=3)
         for line in reply.split(b"\r\n"):
             if line and line.startswith(b"+CIPDOMAIN:"):
                 return str(line[11:], "utf-8").strip('"')

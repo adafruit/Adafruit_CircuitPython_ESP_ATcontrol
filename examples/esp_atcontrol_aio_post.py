@@ -74,7 +74,7 @@ while True:
         )
         print(response.json())
         response.close()
-        counter = counter + 1
+        counter += 1
         print("OK")
     except (ValueError, RuntimeError, adafruit_espatcontrol.OKError) as e:
         print("Failed to get data, retrying\n", e)

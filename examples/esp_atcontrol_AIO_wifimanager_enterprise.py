@@ -81,7 +81,7 @@ while True:
         print(response.json())
         response.close()
 
-        counter = counter + 1
+        counter += 1
         print("OK")
         wifi.disconnect()
 
